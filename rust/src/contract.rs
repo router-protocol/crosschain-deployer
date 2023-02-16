@@ -79,7 +79,9 @@ pub fn execute(
          ExecuteMsg::DeployContract {
              code,
              chainids,
-         } => deploy_code(deps, _env, code, chainids),
+             gas_price,
+             gas_limit
+         } => deploy_code(deps, _env, code, chainids, gas_price , gas_limit),
         ExecuteMsg::RegisterDeployer { address, chainid } => {
             register_deployer(deps, _info, address, chainid)
         },

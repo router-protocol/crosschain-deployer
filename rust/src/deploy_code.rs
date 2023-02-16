@@ -9,14 +9,17 @@ pub fn deploy_code(
     env: Env,
     code: String,
     chainid: Vec<u64>,
+    gas_price: Vec<u64>,
+    gas_limit: Vec<u64>
 ) -> StdResult<Response<RouterMsg>> {
     let mut batch_req: Vec<OutboundBatchRequest> = vec![];
     let mut chainid_contract_calls: Vec<DispatchDataStruct> = vec![];
     let mut deploy_event: Vec<Event> = vec![];
+
     for i in 0..chainid.len() {
         let cid = chainid[i];
 
-        // Tokenise payload data 
+        // Tokenise payload data
         let code_str = code.replace("0x", "");
         let code_vec: Vec<u8> = match hex::decode(code_str) {
             Ok(addr) => addr,
@@ -25,7 +28,7 @@ pub fn deploy_code(
                 return Err(StdError::GenericErr{
                     msg: err.to_string(),
                 });
-            }   
+            }
         };
         let code_tokenized = Token::Bytes(code_vec.clone().into());
 
@@ -65,28 +68,32 @@ pub fn deploy_code(
         let new_dispatch = DispatchDataStruct {
             payload: vec![contract_call],
             chain_id: cid,
+            chain_gas_limit : gas_limit[i],
+            chain_gas_price: gas_price[i]
         };
-        
+
         chainid_contract_calls.push(new_dispatch);
 
     }
 
-    
+
     for j in 0..chainid_contract_calls.len() {
-        
+
         let cid = chainid_contract_calls[j].chain_id.clone();
         let contact_call_payload = chainid_contract_calls[j].payload.clone();
+        let limit = chainid_contract_calls[j].chain_gas_limit.clone();
+        let price = chainid_contract_calls[j].chain_gas_price.clone();
         let request = OutboundBatchRequest {
             destination_chain_type: ChainType::ChainTypeEvm.get_chain_code(),
             destination_chain_id: cid.to_string(),
             contract_calls: contact_call_payload,
             relayer_fee: Coin {
                 denom: String::from("route"),
-                amount: Uint128::new(1000_000u128),
+                amount: Uint128::new(10_000_000u128),
             },
             outgoing_tx_fee: OutgoingTxFee {
-                gas_limit: 25000000,
-                gas_price: 25000000,
+                gas_limit: limit,
+                gas_price: price,
             },
             is_atomic: false,
             exp_timestamp: env.block.time.seconds() + 24 * 60 * 60,
@@ -94,7 +101,7 @@ pub fn deploy_code(
         batch_req.push(request);
     }
 
-    // IF Batch size is 0 throw error 
+    // IF Batch size is 0 throw error
     if batch_req.len() == 0 {
             return Err(StdError::GenericErr{
                 msg: "Batch Request is null".to_string(),

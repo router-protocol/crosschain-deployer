@@ -13,6 +13,9 @@ pub const OWNER: Item<Addr> = Item::new("Owner ");
 pub struct DispatchDataStruct {
     pub payload: Vec<ContractCall>,
     pub chain_id: u64,
+    pub chain_gas_price: u64,
+    pub chain_gas_limit: u64,
+
 }
 
 pub const DEPLOYER_REGISTER: Map<&str, String> = Map::new("erc_factory_registry");

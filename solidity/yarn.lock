@@ -4916,10 +4916,10 @@ evm-gateway-contract@1.0.1:
     "@openzeppelin/contracts" "^4.4.1"
     "@openzeppelin/contracts-upgradeable" "^4.7.3"
 
-evm-gateway-contract@^1.0.4:
-  version "1.0.4"
-  resolved "https://registry.yarnpkg.com/evm-gateway-contract/-/evm-gateway-contract-1.0.4.tgz#0166c0160360dd16ffc3751fe272205acb98fd2b"
-  integrity sha512-bAEDVEVLFP0AliIuNueAT5YUahtaYYuAvc1p59Nsx3iT4OqsBtXsml6pny9qsAREXGGz88w66RmJb3t4inBFgw==
+evm-gateway-contract@^1.0.5:
+  version "1.0.5"
+  resolved "https://registry.yarnpkg.com/evm-gateway-contract/-/evm-gateway-contract-1.0.5.tgz#66127eecd475e9996eb7f7531fbaf310bcfb35ec"
+  integrity sha512-HunHq6HeFyI1tV4dGip5wNIln8c/CgdTyg3fZT1g4uB4ESsOFNX6CFe7Y+fsFONyV0ZFKGbEMzH+fRcfuMTv2Q==
   dependencies:
     "@openzeppelin/contracts" "^4.4.1"
     "@openzeppelin/contracts-upgradeable" "^4.7.3"

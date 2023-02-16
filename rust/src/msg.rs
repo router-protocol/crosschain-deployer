@@ -18,6 +18,8 @@ pub enum ExecuteMsg {
     DeployContract {
         code: String,
         chainids: Vec<u64>,
+        gas_price: Vec<u64>,
+        gas_limit: Vec<u64>,
     },
     RegisterDeployer {
         address: String,
