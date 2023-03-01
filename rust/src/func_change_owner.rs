@@ -1,14 +1,14 @@
-use crate::state::{ OWNER};
+use crate::state::OWNER;
+use cosmwasm_std::Addr;
 use cosmwasm_std::{DepsMut, MessageInfo, Response, StdError, StdResult};
 use router_wasm_bindings::RouterMsg;
-use cosmwasm_std::Addr;
 
 pub fn change_owner(
     deps: DepsMut,
     info: MessageInfo,
     new_owner: Addr,
 ) -> StdResult<Response<RouterMsg>> {
-    // Check - only owner can set deployer address 
+    // Check - only owner can set deployer address
     let owner = OWNER.load(deps.storage)?;
     if owner != info.sender {
         return Err(StdError::generic_err(format!("Unauthorised")));

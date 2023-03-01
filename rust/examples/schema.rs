@@ -3,8 +3,7 @@ use std::fs::create_dir_all;
 
 use cosmwasm_schema::{export_schema, remove_schemas, schema_for};
 
-use router_crosstalk_rust::msg::{ExecuteMsg, GetCountResponse, InstantiateMsg, QueryMsg};
-use router_crosstalk_rust::state::State;
+use router_crosschain_deployer::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
 fn main() {
     let mut out_dir = current_dir().unwrap();

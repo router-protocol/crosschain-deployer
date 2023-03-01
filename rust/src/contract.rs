@@ -1,18 +1,21 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg, SudoMsg};
-use crate::state::{ OWNER , BRIDGE_CONTRACT , DATA };
+use crate::state::{BRIDGE_CONTRACT, CONTRACT_REGISTRY, DATA, OWNER};
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::{entry_point, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
 use cosmwasm_std::{to_binary, Coin, Event, StdError, Uint128};
 use cw2::{get_contract_version, set_contract_version};
-use router_wasm_bindings::types::{ChainType, ContractCall, OutboundBatchRequest , OutgoingTxFee};
-use router_wasm_bindings::{RouterMsg, Bytes};
+use router_wasm_bindings::ethabi::{decode, ParamType};
+use router_wasm_bindings::types::{ChainType, ContractCall, OutboundBatchRequest, OutgoingTxFee};
+use router_wasm_bindings::RouterMsg;
 
 use crate::deploy_code::deploy_code;
-use crate::func_register_deployer::register_deployer;
 use crate::func_change_owner::change_owner;
-use crate::query::{ fetch_data , fetch_bridge_address ,fetch_deployer , fetch_owner};
+use crate::func_register_deployer::register_deployer;
+use crate::query::{
+    fetch_bridge_address, fetch_data, fetch_deploy_state, fetch_deployer, fetch_owner,
+};
 
 // version info for migration info
 const CONTRACT_NAME: &str = "deploy-erc20";
@@ -41,7 +44,14 @@ pub fn sudo(deps: DepsMut, _env: Env, msg: SudoMsg) -> StdResult<Response<Router
             source_chain_id,
             event_nonce,
             payload,
-        } => handle_in_bound_request(deps, sender, chain_type, source_chain_id,event_nonce, payload),
+        } => handle_in_bound_request(
+            deps,
+            sender,
+            chain_type,
+            source_chain_id,
+            event_nonce,
+            payload,
+        ),
         SudoMsg::HandleOutboundAck {
             outbound_tx_requested_by,
             destination_chain_type,
@@ -51,7 +61,7 @@ pub fn sudo(deps: DepsMut, _env: Env, msg: SudoMsg) -> StdResult<Response<Router
             execution_status,
             exec_flags,
             exec_data,
-            refund_amount
+            refund_amount,
         } => handle_out_bound_ack_request(
             deps,
             outbound_tx_requested_by,
@@ -75,17 +85,29 @@ pub fn execute(
     msg: ExecuteMsg,
 ) -> StdResult<Response<RouterMsg>> {
     match msg {
-         ExecuteMsg::ChangeOwner { address } => change_owner( deps , _info ,  address ),
-         ExecuteMsg::DeployContract {
-             code,
-             chainids,
-             gas_price,
-             gas_limit
-         } => deploy_code(deps, _env, code, chainids, gas_price , gas_limit),
+        ExecuteMsg::ChangeOwner { address } => change_owner(deps, _info, address),
+        ExecuteMsg::DeployContract {
+            code,
+            salt,
+            constructor_args,
+            chainids,
+            gas_price,
+            gas_limit,
+        } => deploy_code(
+            deps,
+            _env,
+            _info,
+            code,
+            salt,
+            constructor_args,
+            chainids,
+            gas_price,
+            gas_limit,
+        ),
         ExecuteMsg::RegisterDeployer { address, chainid } => {
             register_deployer(deps, _info, address, chainid)
-        },
-       ExecuteMsg::UpdateBridgeContract { address, payload } => {
+        }
+        ExecuteMsg::UpdateBridgeContract { address, payload } => {
             update_bridge_contract(deps, address, payload.0)
         }
     }
@@ -96,9 +118,8 @@ fn handle_in_bound_request(
     sender: String,
     chain_type: u32,
     src_chain_id: String,
-    event_nonce : u64,
+    event_nonce: u64,
     payload: Binary,
-
 ) -> StdResult<Response<RouterMsg>> {
     let payload_string: Vec<u8> = base64::decode(payload.to_string()).unwrap();
     let string: String = String::from_utf8(payload_string).unwrap();
@@ -159,18 +180,46 @@ fn handle_out_bound_ack_request(
     execution_status: bool,
     exec_flags: Vec<bool>,
     exec_data: Vec<Binary>,
-    refund_amt : Coin,
+    _refund_amt: Coin,
 ) -> StdResult<Response<RouterMsg>> {
-    refund_amt.to_string();
-    let mut data: Vec<Bytes> = vec![];
-    for i in 0..exec_data.len() {
-        data.push(exec_data[i].0.clone());
-    }
+    // TODO : Safety checks not applied for call failure and handling of failed requests
     let execution_msg: String = format!(
-        "execution_code {:?}, execution_status {:?}, exec_flags {:?}, exec_data {:?}",
-        execution_code, execution_status, exec_flags, data
+        "execution_code {:?}, execution_status {:?}, exec_flags {:?}, exec_data {:?} {:?}",
+        execution_code,
+        execution_status,
+        exec_flags,
+        exec_data,
+        exec_data.len()
     );
     deps.api.debug(&execution_msg);
+
+    let msg: String = format!("execution_code {:?}", &exec_data[1]);
+    deps.api.debug(&msg);
+    let decoded_payload = match decode(
+        &[
+            ParamType::Uint(64),
+            ParamType::FixedBytes(32),
+            ParamType::FixedBytes(32),
+            ParamType::Address,
+        ],
+        &exec_data[1],
+    ) {
+        Ok(token_vec) => token_vec,
+        Err(_) => {
+            return Err(StdError::GenericErr {
+                msg: String::from("err.into()"),
+            })
+        }
+    };
+    deps.api.debug("token vec created");
+    let cid = decoded_payload[0].clone().into_uint().unwrap().as_u64();
+    let hash_str = hex::encode(decoded_payload[1].clone().into_fixed_bytes().unwrap());
+    let salt_str = hex::encode(decoded_payload[2].clone().into_fixed_bytes().unwrap());
+    let addr_str = hex::encode(decoded_payload[3].clone().into_address().unwrap());
+    // Map Hash state to chainID
+    deps.api.debug("hash values created");
+    CONTRACT_REGISTRY.save(deps.storage, (hash_str, salt_str, cid), &(true, addr_str))?;
+    deps.api.debug("done");
     let res = Response::new()
         .add_attribute("sender", sender)
         .add_attribute("destination_chain_type", destination_chain_type.to_string())
@@ -229,9 +278,9 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> StdResult<Response
         return Err(StdError::generic_err("Can only upgrade from same type").into());
     }
     // note: better to do proper semver compare, but string compare *usually* works
-    if ver.version >= CONTRACT_VERSION.to_string() {
-        return Err(StdError::generic_err("Cannot upgrade from a newer version").into());
-    }
+    // if ver.version >= CONTRACT_VERSION.to_string() {
+    //     return Err(StdError::generic_err("Cannot upgrade from a newer version").into());
+    // }
 
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
     Ok(Response::default())
@@ -243,7 +292,11 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::GetContractVersion {} => to_binary(&get_contract_version(deps.storage)?),
         QueryMsg::FetchData {} => to_binary(&fetch_data(deps)?),
         QueryMsg::FetchOwner {} => to_binary(&fetch_owner(deps)?),
-        QueryMsg::FetchDeployer { chainid } => to_binary(&fetch_deployer(deps,chainid)?)
+        QueryMsg::FetchDeployer { chainid } => to_binary(&fetch_deployer(deps, chainid)?),
+        QueryMsg::FetchDeployState {
+            hash,
+            salt,
+            chainid,
+        } => to_binary(&fetch_deploy_state(deps, hash, salt, chainid)?),
     }
 }
-

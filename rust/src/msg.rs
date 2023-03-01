@@ -1,4 +1,4 @@
-use cosmwasm_std::{ Binary , Addr };
+use cosmwasm_std::{Addr, Binary};
 pub use router_wasm_bindings::SudoMsg;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -13,10 +13,17 @@ pub struct InstantiateMsg {
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
     // here user can define other executable messages
-    UpdateBridgeContract { address: String, payload: Binary },
-    ChangeOwner { address: Addr },
+    UpdateBridgeContract {
+        address: String,
+        payload: Binary,
+    },
+    ChangeOwner {
+        address: Addr,
+    },
     DeployContract {
         code: String,
+        salt: String,
+        constructor_args: Vec<String>,
         chainids: Vec<u64>,
         gas_price: Vec<u64>,
         gas_limit: Vec<u64>,
@@ -25,8 +32,6 @@ pub enum ExecuteMsg {
         address: String,
         chainid: u64,
     },
-
-
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -38,9 +43,13 @@ pub enum QueryMsg {
     // fetch contract version
     GetContractVersion {}, // here user defined other query messages
     FetchData {},          // here user defined other query messages
-    FetchOwner{},
+    FetchOwner {},
     FetchDeployer {
         chainid: u64,
     },
-
+    FetchDeployState {
+        hash: String,
+        salt: String,
+        chainid: u64,
+    },
 }

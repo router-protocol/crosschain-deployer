@@ -8,6 +8,6 @@ pub mod tests;
 
 pub use crate::error::ContractError;
 mod deploy_code;
-mod func_register_deployer;
 mod func_change_owner;
+mod func_register_deployer;
 mod query;

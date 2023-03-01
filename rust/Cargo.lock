@@ -612,6 +612,7 @@ dependencies = [
  "router-wasm-bindings",
  "schemars",
  "serde",
+ "sha3",
  "thiserror",
 ]
 

@@ -1,4 +1,4 @@
-use crate::state::{ OWNER, DEPLOYER_REGISTER};
+use crate::state::{DEPLOYER_REGISTER, OWNER};
 use cosmwasm_std::{DepsMut, MessageInfo, Response, StdError, StdResult};
 use router_wasm_bindings::RouterMsg;
 
@@ -8,7 +8,7 @@ pub fn register_deployer(
     factory: String,
     chainid: u64,
 ) -> StdResult<Response<RouterMsg>> {
-    // Check - only owner can set deployer address 
+    // Check - only owner can set deployer address
     let owner = OWNER.load(deps.storage)?;
     if owner != info.sender {
         return Err(StdError::generic_err(format!("Unauthorised")));
