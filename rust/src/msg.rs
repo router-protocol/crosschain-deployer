@@ -27,6 +27,7 @@ pub enum ExecuteMsg {
         chainids: Vec<u64>,
         gas_price: Vec<u64>,
         gas_limit: Vec<u64>,
+        forwarder_contract : String 
     },
     RegisterDeployer {
         address: String,

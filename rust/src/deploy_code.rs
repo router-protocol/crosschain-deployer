@@ -1,4 +1,4 @@
-use crate::state::{DispatchDataStruct, CONTRACT_REGISTRY, DEPLOYER_REGISTER};
+use crate::state::{DispatchDataStruct, CONTRACT_REGISTRY, DEPLOYER_REGISTER };
 use cosmwasm_std::{
     Coin, DepsMut, Env, Event, MessageInfo, Response, StdError, StdResult, Uint128,
 };
@@ -18,6 +18,7 @@ pub fn deploy_code(
     chainid: Vec<u64>,
     gas_price: Vec<u64>,
     gas_limit: Vec<u64>,
+    forwarder_contract: String
 ) -> StdResult<Response<RouterMsg>> {
     let mut batch_req: Vec<OutboundBatchRequest> = vec![];
     let mut chainid_contract_calls: Vec<DispatchDataStruct> = vec![];
@@ -112,7 +113,7 @@ pub fn deploy_code(
                 salt_str_dec.clone().into(),
                 cid,
             ),
-            &(false, "pending ack".to_string()),
+            &(false, "pending ack".to_string() , forwarder_contract.clone() ),
         )?;
 
         // Generate and add Event

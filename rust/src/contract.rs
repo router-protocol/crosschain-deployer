@@ -1,13 +1,13 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg, SudoMsg};
-use crate::state::{BRIDGE_CONTRACT, CONTRACT_REGISTRY, DATA, OWNER};
+use crate::state::{BRIDGE_CONTRACT, CONTRACT_REGISTRY, DATA, OWNER };
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::{entry_point, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
 use cosmwasm_std::{to_binary, Coin, Event, StdError, Uint128};
 use cw2::{get_contract_version, set_contract_version};
 use router_wasm_bindings::ethabi::{decode, ParamType};
-use router_wasm_bindings::types::{ChainType, ContractCall, OutboundBatchRequest, OutgoingTxFee};
+use router_wasm_bindings::types::{ChainType, ContractCall, OutboundBatchRequest, OutgoingTxFee };
 use router_wasm_bindings::RouterMsg;
 
 use crate::deploy_code::deploy_code;
@@ -93,6 +93,7 @@ pub fn execute(
             chainids,
             gas_price,
             gas_limit,
+            forwarder_contract
         } => deploy_code(
             deps,
             _env,
@@ -103,6 +104,7 @@ pub fn execute(
             chainids,
             gas_price,
             gas_limit,
+            forwarder_contract
         ),
         ExecuteMsg::RegisterDeployer { address, chainid } => {
             register_deployer(deps, _info, address, chainid)
@@ -216,9 +218,15 @@ fn handle_out_bound_ack_request(
     let hash_str = hex::encode(decoded_payload[1].clone().into_fixed_bytes().unwrap());
     let salt_str = hex::encode(decoded_payload[2].clone().into_fixed_bytes().unwrap());
     let addr_str = hex::encode(decoded_payload[3].clone().into_address().unwrap());
+
+    let contract_reg_info = CONTRACT_REGISTRY.load(deps.storage, (hash_str.clone(), salt_str.clone(), cid))?;
+    let forwarder_contract = contract_reg_info.2.clone();
+    // TODO - Need to call Forwarder Registry 
+
+
     // Map Hash state to chainID
     deps.api.debug("hash values created");
-    CONTRACT_REGISTRY.save(deps.storage, (hash_str, salt_str, cid), &(true, addr_str))?;
+    CONTRACT_REGISTRY.save(deps.storage, (hash_str, salt_str, cid), &(true, addr_str , forwarder_contract.clone() ))?;
     deps.api.debug("done");
     let res = Response::new()
         .add_attribute("sender", sender)
@@ -300,3 +308,4 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         } => to_binary(&fetch_deploy_state(deps, hash, salt, chainid)?),
     }
 }
+
