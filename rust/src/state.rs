@@ -16,9 +16,10 @@ pub struct DispatchDataStruct {
 }
 // Code Hash , Salt , chainID => State , Address
 
-pub const CONTRACT_REGISTRY: Map<(String, String, u64), (bool, String , String )> =
+pub const CONTRACT_REGISTRY: Map<(String, String, u64), (bool, String, String)> =
     Map::new("contract_registry");
 
 pub const DEPLOYER_REGISTER: Map<&str, String> = Map::new("deployer_registry");
 
-pub const REQUEST_FORWARD_MAPPING: Map<(String, u32, u64), String> = Map::new("reqeust_forwarder_mapping");
+pub const REQUEST_FORWARD_MAPPING: Map<(String, u32, u64), String> =
+    Map::new("reqeust_forwarder_mapping");

@@ -27,7 +27,7 @@ pub enum ExecuteMsg {
         chainids: Vec<u64>,
         gas_price: Vec<u64>,
         gas_limit: Vec<u64>,
-        forwarder_contract : String 
+        forwarder_contract: String,
     },
     RegisterDeployer {
         address: String,
@@ -52,5 +52,20 @@ pub enum QueryMsg {
         hash: String,
         salt: String,
         chainid: u64,
+    },
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct CustodyContractInfo {
+    pub address: String,
+    pub chain_id: String,
+    pub chain_type: u32,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum ForwarderExecuteMsg {
+    SetCustodyContracts {
+        custody_contracts: Vec<CustodyContractInfo>,
     },
 }

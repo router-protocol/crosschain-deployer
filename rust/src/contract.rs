@@ -1,13 +1,16 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use crate::msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg, SudoMsg};
-use crate::state::{BRIDGE_CONTRACT, CONTRACT_REGISTRY, DATA, OWNER };
+use crate::msg::{
+    CustodyContractInfo, ExecuteMsg, ForwarderExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg,
+    SudoMsg,
+};
+use crate::state::{BRIDGE_CONTRACT, CONTRACT_REGISTRY, DATA, OWNER};
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::{entry_point, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
-use cosmwasm_std::{to_binary, Coin, Event, StdError, Uint128};
+use cosmwasm_std::{to_binary, Coin, CosmosMsg, Event, StdError, Uint128, WasmMsg};
 use cw2::{get_contract_version, set_contract_version};
 use router_wasm_bindings::ethabi::{decode, ParamType};
-use router_wasm_bindings::types::{ChainType, ContractCall, OutboundBatchRequest, OutgoingTxFee };
+use router_wasm_bindings::types::{ChainType, ContractCall, OutboundBatchRequest, OutgoingTxFee};
 use router_wasm_bindings::RouterMsg;
 
 use crate::deploy_code::deploy_code;
@@ -93,7 +96,7 @@ pub fn execute(
             chainids,
             gas_price,
             gas_limit,
-            forwarder_contract
+            forwarder_contract,
         } => deploy_code(
             deps,
             _env,
@@ -104,7 +107,7 @@ pub fn execute(
             chainids,
             gas_price,
             gas_limit,
-            forwarder_contract
+            forwarder_contract,
         ),
         ExecuteMsg::RegisterDeployer { address, chainid } => {
             register_deployer(deps, _info, address, chainid)
@@ -219,21 +222,38 @@ fn handle_out_bound_ack_request(
     let salt_str = hex::encode(decoded_payload[2].clone().into_fixed_bytes().unwrap());
     let addr_str = hex::encode(decoded_payload[3].clone().into_address().unwrap());
 
-    let contract_reg_info = CONTRACT_REGISTRY.load(deps.storage, (hash_str.clone(), salt_str.clone(), cid))?;
+    let contract_reg_info =
+        CONTRACT_REGISTRY.load(deps.storage, (hash_str.clone(), salt_str.clone(), cid))?;
     let forwarder_contract = contract_reg_info.2.clone();
-    // TODO - Need to call Forwarder Registry 
-
+    // TODO - Need to call Forwarder Registry
+    let mut evm_address: String = String::from("0x");
+    evm_address.push_str(&addr_str);
+    let exec_msg = CosmosMsg::Wasm(WasmMsg::Execute {
+        contract_addr: forwarder_contract.clone(),
+        funds: vec![],
+        msg: to_binary(&ForwarderExecuteMsg::SetCustodyContracts {
+            custody_contracts: vec![CustodyContractInfo {
+                address: evm_address,
+                chain_id: destination_chain_id.clone(),
+                chain_type: destination_chain_type,
+            }],
+        })?,
+    });
 
     // Map Hash state to chainID
     deps.api.debug("hash values created");
-    CONTRACT_REGISTRY.save(deps.storage, (hash_str, salt_str, cid), &(true, addr_str , forwarder_contract.clone() ))?;
+    CONTRACT_REGISTRY.save(
+        deps.storage,
+        (hash_str, salt_str, cid),
+        &(true, addr_str, forwarder_contract.clone()),
+    )?;
     deps.api.debug("done");
     let res = Response::new()
         .add_attribute("sender", sender)
         .add_attribute("destination_chain_type", destination_chain_type.to_string())
         .add_attribute("destination_chain_id", destination_chain_id)
         .add_attribute("outbound_batch_nonce", outbound_batch_nonce.to_string());
-    Ok(res)
+    Ok(res.add_message(exec_msg))
 }
 
 fn update_bridge_contract(
@@ -308,4 +328,3 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         } => to_binary(&fetch_deploy_state(deps, hash, salt, chainid)?),
     }
 }
-

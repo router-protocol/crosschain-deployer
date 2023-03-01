@@ -24,6 +24,6 @@ pub fn fetch_deploy_state(
     code_hash: String,
     salt: String,
     chainid: u64,
-) -> StdResult<(bool, String , String)> {
+) -> StdResult<(bool, String, String)> {
     CONTRACT_REGISTRY.load(deps.storage, (code_hash, salt, chainid))
 }
