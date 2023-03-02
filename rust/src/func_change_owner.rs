@@ -1,10 +1,10 @@
 use crate::state::OWNER;
 use cosmwasm_std::Addr;
 use cosmwasm_std::{DepsMut, MessageInfo, Response, StdError, StdResult};
-use router_wasm_bindings::RouterMsg;
+use router_wasm_bindings::{RouterMsg, RouterQuery};
 
 pub fn change_owner(
-    deps: DepsMut,
+    deps: DepsMut<RouterQuery>,
     info: MessageInfo,
     new_owner: Addr,
 ) -> StdResult<Response<RouterMsg>> {

@@ -25,7 +25,7 @@ pub enum ExecuteMsg {
         salt: String,
         constructor_args: Vec<String>,
         chainids: Vec<u64>,
-        gas_price: Vec<u64>,
+        chain_types: Vec<String>,
         gas_limit: Vec<u64>,
         forwarder_contract: String,
     },
@@ -52,6 +52,10 @@ pub enum QueryMsg {
         hash: String,
         salt: String,
         chainid: u64,
+    },
+    FetchOracleGasPrice {
+        chain_id: String,
+        chain_type: u32,
     },
 }
 

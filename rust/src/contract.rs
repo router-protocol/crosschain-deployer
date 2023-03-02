@@ -6,18 +6,19 @@ use crate::msg::{
 };
 use crate::state::{BRIDGE_CONTRACT, CONTRACT_REGISTRY, DATA, OWNER};
 #[cfg(not(feature = "library"))]
-use cosmwasm_std::{entry_point, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
-use cosmwasm_std::{to_binary, Coin, CosmosMsg, Event, StdError, Uint128, WasmMsg};
+use cosmwasm_std::{entry_point, Binary, DepsMut, Env, MessageInfo, Response, StdResult};
+use cosmwasm_std::{to_binary, Coin, CosmosMsg, Deps, Event, StdError, Uint128, WasmMsg};
 use cw2::{get_contract_version, set_contract_version};
 use router_wasm_bindings::ethabi::{decode, ParamType};
 use router_wasm_bindings::types::{ChainType, ContractCall, OutboundBatchRequest, OutgoingTxFee};
-use router_wasm_bindings::RouterMsg;
+use router_wasm_bindings::{RouterMsg, RouterQuery};
 
 use crate::deploy_code::deploy_code;
 use crate::func_change_owner::change_owner;
 use crate::func_register_deployer::register_deployer;
 use crate::query::{
-    fetch_bridge_address, fetch_data, fetch_deploy_state, fetch_deployer, fetch_owner,
+    fetch_bridge_address, fetch_data, fetch_deploy_state, fetch_deployer, fetch_oracle_gas_price,
+    fetch_owner,
 };
 
 // version info for migration info
@@ -28,7 +29,7 @@ pub const CREATE_OUTBOUND_REPLY_ID: u64 = 1;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
-    deps: DepsMut,
+    deps: DepsMut<RouterQuery>,
     _env: Env,
     _info: MessageInfo,
     msg: InstantiateMsg,
@@ -39,7 +40,7 @@ pub fn instantiate(
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn sudo(deps: DepsMut, _env: Env, msg: SudoMsg) -> StdResult<Response<RouterMsg>> {
+pub fn sudo(deps: DepsMut<RouterQuery>, _env: Env, msg: SudoMsg) -> StdResult<Response<RouterMsg>> {
     match msg {
         SudoMsg::HandleInboundReq {
             sender,
@@ -82,7 +83,7 @@ pub fn sudo(deps: DepsMut, _env: Env, msg: SudoMsg) -> StdResult<Response<Router
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
-    deps: DepsMut,
+    deps: DepsMut<RouterQuery>,
     _env: Env,
     _info: MessageInfo,
     msg: ExecuteMsg,
@@ -94,7 +95,7 @@ pub fn execute(
             salt,
             constructor_args,
             chainids,
-            gas_price,
+            chain_types,
             gas_limit,
             forwarder_contract,
         } => deploy_code(
@@ -105,7 +106,7 @@ pub fn execute(
             salt,
             constructor_args,
             chainids,
-            gas_price,
+            chain_types,
             gas_limit,
             forwarder_contract,
         ),
@@ -119,7 +120,7 @@ pub fn execute(
 }
 
 fn handle_in_bound_request(
-    deps: DepsMut,
+    deps: DepsMut<RouterQuery>,
     sender: String,
     chain_type: u32,
     src_chain_id: String,
@@ -176,7 +177,7 @@ fn handle_in_bound_request(
 }
 
 fn handle_out_bound_ack_request(
-    deps: DepsMut,
+    deps: DepsMut<RouterQuery>,
     sender: String,
     destination_chain_type: u32,
     destination_chain_id: String,
@@ -257,7 +258,7 @@ fn handle_out_bound_ack_request(
 }
 
 fn update_bridge_contract(
-    deps: DepsMut,
+    deps: DepsMut<RouterQuery>,
     address: String,
     payload: Vec<u8>,
 ) -> StdResult<Response<RouterMsg>> {
@@ -299,7 +300,7 @@ fn update_bridge_contract(
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> StdResult<Response> {
+pub fn migrate(deps: DepsMut<RouterQuery>, _env: Env, _msg: MigrateMsg) -> StdResult<Response> {
     let ver = cw2::get_contract_version(deps.storage)?;
     // ensure we are migrating from an allowed contract
     if ver.contract != CONTRACT_NAME.to_string() {
@@ -315,7 +316,7 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> StdResult<Response
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
+pub fn query(deps: Deps<RouterQuery>, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::GetContractVersion {} => to_binary(&get_contract_version(deps.storage)?),
         QueryMsg::FetchData {} => to_binary(&fetch_data(deps)?),
@@ -326,5 +327,9 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
             salt,
             chainid,
         } => to_binary(&fetch_deploy_state(deps, hash, salt, chainid)?),
+        QueryMsg::FetchOracleGasPrice {
+            chain_id,
+            chain_type,
+        } => to_binary(&fetch_oracle_gas_price(deps, chain_id, chain_type)?),
     }
 }

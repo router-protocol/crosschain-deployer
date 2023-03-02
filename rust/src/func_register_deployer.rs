@@ -1,9 +1,9 @@
 use crate::state::{DEPLOYER_REGISTER, OWNER};
 use cosmwasm_std::{DepsMut, MessageInfo, Response, StdError, StdResult};
-use router_wasm_bindings::RouterMsg;
+use router_wasm_bindings::{RouterMsg, RouterQuery};
 
 pub fn register_deployer(
-    deps: DepsMut,
+    deps: DepsMut<RouterQuery>,
     info: MessageInfo,
     factory: String,
     chainid: u64,

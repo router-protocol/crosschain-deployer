@@ -4,19 +4,21 @@ use cosmwasm_std::{
 };
 use router_wasm_bindings::ethabi::{encode, Token};
 use router_wasm_bindings::types::{ChainType, ContractCall, OutboundBatchRequest, OutgoingTxFee};
-use router_wasm_bindings::RouterMsg;
+use router_wasm_bindings::{RouterMsg, RouterQuerier, RouterQuery};
+
+// use crate::query::fetch_oracle_gas_price;
 
 use sha3::{Digest, Keccak256};
 
 pub fn deploy_code(
-    deps: DepsMut,
+    deps: DepsMut<RouterQuery>,
     env: Env,
     info: MessageInfo,
     code: String,
     salt: String,
     constructor_args: Vec<String>,
     chainid: Vec<u64>,
-    gas_price: Vec<u64>,
+    chain_types: Vec<String>,
     gas_limit: Vec<u64>,
     forwarder_contract: String,
 ) -> StdResult<Response<RouterMsg>> {
@@ -57,7 +59,6 @@ pub fn deploy_code(
         .add_attribute("hash - ", code_hash_str.clone())
         .add_attribute("salt - ", salt_str_dec.clone())
         .add_attribute("caller - ", info.sender);
-
     for i in 0..chainid.len() {
         let cid = chainid[i];
 
@@ -128,6 +129,10 @@ pub fn deploy_code(
         let evt = Event::new("deploy_code_event").add_attribute(cid_str, payload_str.clone());
         deploy_event.push(evt);
 
+        //Fetch Gas Prices
+        let router_querier: RouterQuerier = RouterQuerier::new(&deps.querier);
+        let gas_price = router_querier.gas_price(chain_types[i].clone(), cid as u32)?;
+
         // Generate Factory Address
         let contract_call: ContractCall = ContractCall {
             destination_contract_address: deployer_addr_vec.clone(),
@@ -137,7 +142,7 @@ pub fn deploy_code(
             payload: vec![contract_call],
             chain_id: cid,
             chain_gas_limit: gas_limit[i],
-            chain_gas_price: gas_price[i],
+            chain_gas_price: gas_price.gas_price,
         };
 
         chainid_contract_calls.push(new_dispatch);
