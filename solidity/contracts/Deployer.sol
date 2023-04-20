@@ -4,7 +4,7 @@ pragma solidity ^0.8.4;
 
 import "hardhat/console.sol";
 
-import "evm-gateway-contract/contracts/IGateway.sol";
+import "@routerprotocol/evm-gateway-contracts/contracts/IGateway.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract CrossChainDeployer {
@@ -45,9 +45,23 @@ contract CrossChainDeployer {
         return ( chainID , digest , salt , addr );
     }
 
-    function handleRequestFromRouter(string memory sender, bytes memory payload) external returns ( uint64 , bytes32 , bytes32 , address ) {
+    function iReceive(
+        bytes memory requestSender,
+        bytes memory packet,
+        string memory srcChainId
+    ) external returns (bytes memory){
         require(msg.sender == address(gateway), "Only gateway can call this function");
-        return deployContract( sender , payload);
+        address sender = toAddress(requestSender);
+        ( uint64 cId, bytes32 digest, bytes32 salt, address addr) = deployContract( sender , packet);
+        return abi.encode( cid , digest , salt , addr );
+    }
+
+    function toAddress(bytes memory _bytes) internal pure returns (address contractAddress) {
+        bytes20 srcTokenAddress;
+        assembly {
+            srcTokenAddress := mload(add(_bytes, 0x20))
+        }
+        contractAddress = address(srcTokenAddress);
     }
 
 }

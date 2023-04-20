@@ -604,7 +604,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "router-crosschain-deployer"
+name = "router-crosstalk-rust"
 version = "0.1.0"
 dependencies = [
  "base64",
@@ -624,9 +624,9 @@ dependencies = [
 
 [[package]]
 name = "router-wasm-bindings"
-version = "0.1.17"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "09e63dc8e909d7530e87373e57707a10d9b715b7ca554ab4b862bd6a34825282"
+checksum = "138093f468557e7b378535b65d2569e4b2ce706e9e7952fc67989511a4807d37"
 dependencies = [
  "bech32",
  "cosmwasm-std",

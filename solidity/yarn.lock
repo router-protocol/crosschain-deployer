@@ -895,6 +895,14 @@
     path-browserify "^1.0.0"
     url "^0.11.0"
 
+"@routerprotocol/evm-gateway-contracts@^1.1.7":
+  version "1.1.7"
+  resolved "https://registry.yarnpkg.com/@routerprotocol/evm-gateway-contracts/-/evm-gateway-contracts-1.1.7.tgz#b11b9e439fa1213c694455b2f2acf0b8da2a715d"
+  integrity sha512-IPmD/UPXuNKT5l+2m+f70CA8axD8uRyNIuUxDyDdrh3b3UJq61Q9RzHxowvbQHY1s+Ywge99io3R1QjQk8PgXw==
+  dependencies:
+    "@openzeppelin/contracts" "^4.4.1"
+    "@openzeppelin/contracts-upgradeable" "^4.7.3"
+
 "@scure/base@~1.1.0":
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/@scure/base/-/base-1.1.1.tgz#ebb651ee52ff84f420097055f4bf46cfba403938"
@@ -4907,23 +4915,6 @@ events@^3.0.0, events@^3.2.0:
   version "3.3.0"
   resolved "https://registry.yarnpkg.com/events/-/events-3.3.0.tgz#31a95ad0a924e2d2c419a813aeb2c4e878ea7400"
   integrity sha512-mQw+2fkQbALzQ7V0MY0IqdnXNOeTtP4r0lN9z7AAawCXgqea7bDii20AYrIBrFd/Hx0M2Ocz6S111CaFkUcb0Q==
-
-evm-gateway-contract@1.0.1:
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/evm-gateway-contract/-/evm-gateway-contract-1.0.1.tgz#151a26485bbdeb497c4bb925ea20c89ecbeaf211"
-  integrity sha512-VV5xdRr6NZ6jGE5N8fFxtL6n7RfEawqyb5QHSjZFJjyKPStvaqpHJU/b80uqoyYxfu6kUgJLN+ZaBCU1rFhGAg==
-  dependencies:
-    "@openzeppelin/contracts" "^4.4.1"
-    "@openzeppelin/contracts-upgradeable" "^4.7.3"
-
-evm-gateway-contract@^1.0.5:
-  version "1.0.5"
-  resolved "https://registry.yarnpkg.com/evm-gateway-contract/-/evm-gateway-contract-1.0.5.tgz#66127eecd475e9996eb7f7531fbaf310bcfb35ec"
-  integrity sha512-HunHq6HeFyI1tV4dGip5wNIln8c/CgdTyg3fZT1g4uB4ESsOFNX6CFe7Y+fsFONyV0ZFKGbEMzH+fRcfuMTv2Q==
-  dependencies:
-    "@openzeppelin/contracts" "^4.4.1"
-    "@openzeppelin/contracts-upgradeable" "^4.7.3"
-    evm-gateway-contract "1.0.1"
 
 evp_bytestokey@^1.0.0, evp_bytestokey@^1.0.3:
   version "1.0.3"

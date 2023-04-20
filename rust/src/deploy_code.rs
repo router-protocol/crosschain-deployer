@@ -1,10 +1,10 @@
-use crate::state::{DispatchDataStruct, CONTRACT_REGISTRY, DEPLOYER_REGISTER};
+use crate::state::{ CONTRACT_REGISTRY, DEPLOYER_REGISTER , DispatchDataStruct};
 use cosmwasm_std::{
-    Coin, DepsMut, Env, Event, MessageInfo, Response, StdError, StdResult, Uint128,
+    DepsMut, Env, Event, MessageInfo, Response, StdError, StdResult, Uint128,
 };
 use router_wasm_bindings::ethabi::{encode, Token};
-use router_wasm_bindings::types::{ChainType, ContractCall, OutboundBatchRequest, OutgoingTxFee};
-use router_wasm_bindings::{RouterMsg, RouterQuerier, RouterQuery};
+use router_wasm_bindings::types::{  RequestMetaData ,AckType  };
+use router_wasm_bindings::{RouterMsg, RouterQuerier, RouterQuery, Bytes};
 
 // use crate::query::fetch_oracle_gas_price;
 
@@ -12,7 +12,7 @@ use sha3::{Digest, Keccak256};
 
 pub fn deploy_code(
     deps: DepsMut<RouterQuery>,
-    env: Env,
+    _env: Env,
     info: MessageInfo,
     code: String,
     salt: String,
@@ -22,9 +22,10 @@ pub fn deploy_code(
     gas_limit: Vec<u64>,
     forwarder_contract: String,
 ) -> StdResult<Response<RouterMsg>> {
-    let mut batch_req: Vec<OutboundBatchRequest> = vec![];
+    // let mut req = [ 0 , 9];
     let mut chainid_contract_calls: Vec<DispatchDataStruct> = vec![];
     let mut deploy_event: Vec<Event> = vec![];
+    let mut outbound_messages: Vec<RouterMsg> = vec![];
 
     // Tokenise payload data
     let code_str = code.replace("0x", "");
@@ -59,6 +60,7 @@ pub fn deploy_code(
         .add_attribute("hash - ", code_hash_str.clone())
         .add_attribute("salt - ", salt_str_dec.clone())
         .add_attribute("caller - ", info.sender);
+    let mut gas_total: u64 = 0;
     for i in 0..chainid.len() {
         let cid = chainid[i];
 
@@ -87,7 +89,7 @@ pub fn deploy_code(
         let salt_tokenized = Token::FixedBytes(salt_vec.clone().into());
 
         // Generate Payload
-        let payload = encode(&[code_tokenized, salt_tokenized, code_hash_tokenized]);
+        let payload: Bytes = encode(&[code_tokenized, salt_tokenized, code_hash_tokenized]);
 
         let payload_str = hex::encode(payload.clone());
 
@@ -131,19 +133,19 @@ pub fn deploy_code(
 
         //Fetch Gas Prices
         let router_querier: RouterQuerier = RouterQuerier::new(&deps.querier);
-        let gas_price = router_querier.gas_price(chain_types[i].clone(), cid as u32)?;
+        let gas_price = router_querier.gas_price(chain_types[i].clone())?;
 
         // Generate Factory Address
-        let contract_call: ContractCall = ContractCall {
-            destination_contract_address: deployer_addr_vec.clone(),
-            payload: payload.clone().to_vec(),
-        };
+
         let new_dispatch = DispatchDataStruct {
-            payload: vec![contract_call],
+            payload: payload.clone().to_vec(),
+            dest_addr : deployer_addr_vec.clone().to_vec(),
             chain_id: cid,
             chain_gas_limit: gas_limit[i],
             chain_gas_price: gas_price.gas_price,
         };
+        let gas_used = gas_limit[i].clone() * gas_price.gas_price.clone();
+        gas_total = gas_total + gas_used;
 
         chainid_contract_calls.push(new_dispatch);
     }
@@ -151,39 +153,44 @@ pub fn deploy_code(
     for j in 0..chainid_contract_calls.len() {
         let cid = chainid_contract_calls[j].chain_id.clone();
         let contact_call_payload = chainid_contract_calls[j].payload.clone();
+        let contract_addr = chainid_contract_calls[j].dest_addr.clone();
         let limit = chainid_contract_calls[j].chain_gas_limit.clone();
         let price = chainid_contract_calls[j].chain_gas_price.clone();
-        let request = OutboundBatchRequest {
-            destination_chain_type: ChainType::ChainTypeEvm.get_chain_code(),
-            destination_chain_id: cid.to_string(),
-            contract_calls: contact_call_payload,
-            relayer_fee: Coin {
-                denom: String::from("route"),
-                amount: Uint128::new(10_000_000u128),
-            },
-            outgoing_tx_fee: OutgoingTxFee {
-                gas_limit: limit,
-                gas_price: price,
-            },
-            is_atomic: false,
-            exp_timestamp: env.block.time.seconds() + 24 * 60 * 60,
+
+        let request_packet: Bytes = encode(&[Token::Bytes(contact_call_payload), Token::Bytes(contract_addr)]);
+        let dest_chain_id: String = String::from(cid.to_string());
+
+        let request_metadata: RequestMetaData = RequestMetaData {
+            dest_gas_limit: limit,
+            dest_gas_price: price,
+            ack_gas_limit: 300_000,
+            ack_gas_price: 10_000_000,
+            relayer_fee: Uint128::zero(),
+            ack_type: AckType::AckOnBoth,
+            is_read_call: false,
+            asm_address: vec![],
         };
-        batch_req.push(request);
+    
+        let request: RouterMsg = RouterMsg::CrosschainCall {
+            version: 1,
+            route_amount: Uint128::new(0u128),
+            route_recipient: vec![],
+            dest_chain_id,
+            request_metadata: request_metadata.get_abi_encoded_bytes(),
+            request_packet,
+        };
+            outbound_messages.push(request);
     }
 
-    // IF Batch size is 0 throw error
-    if batch_req.len() == 0 {
+    // IF Outbound Message is 0 throw error
+    if outbound_messages.len() == 0 {
         return Err(StdError::GenericErr {
-            msg: "Batch Request is null".to_string(),
+            msg: "Outbound Message is null".to_string(),
         });
     }
 
-    let outbound_batch_reqs: RouterMsg = RouterMsg::OutboundBatchRequests {
-        outbound_batch_requests: batch_req.to_vec(),
-    };
-
     let res = Response::new()
-        .add_message(outbound_batch_reqs)
+        .add_messages(outbound_messages)
         .add_event(code_event)
         .add_events(deploy_event);
 
