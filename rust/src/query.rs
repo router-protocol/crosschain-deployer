@@ -1,9 +1,11 @@
-use crate::state::{BRIDGE_CONTRACT, CONTRACT_REGISTRY, DATA, DEPLOYER_REGISTER, OWNER , CHAIN_TYPE_MAPPING};
+use crate::state::{
+    BRIDGE_CONTRACT, CHAIN_TYPE_MAPPING, CONTRACT_REGISTRY, DATA, DEPLOYER_REGISTER, OWNER,
+};
 use cosmwasm_std::Addr;
 use cosmwasm_std::{Deps, StdResult};
-use router_wasm_bindings::{ RouterQuery };
-use router_wasm_bindings::types::{ GasPriceResponse };
-use router_wasm_bindings::{ RouterQuerier };
+use router_wasm_bindings::types::GasPriceResponse;
+use router_wasm_bindings::RouterQuerier;
+use router_wasm_bindings::RouterQuery;
 
 pub fn fetch_deployer(deps: Deps<RouterQuery>, chainid: u64) -> StdResult<String> {
     DEPLOYER_REGISTER.load(deps.storage, &chainid.to_string())
@@ -30,8 +32,6 @@ pub fn fetch_deploy_state(
 ) -> StdResult<(bool, String, String)> {
     CONTRACT_REGISTRY.load(deps.storage, (code_hash, salt, chainid))
 }
-
-
 
 pub fn fetch_oracle_gas_price(
     deps: Deps<RouterQuery>,

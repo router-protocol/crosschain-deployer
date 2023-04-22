@@ -1,6 +1,6 @@
-use cw_storage_plus::{Item, Map};
 use cosmwasm_std::Addr;
-use router_wasm_bindings::{ Bytes };
+use cw_storage_plus::{Item, Map};
+use router_wasm_bindings::Bytes;
 
 pub const DATA: Item<String> = Item::new("data_string");
 
@@ -17,9 +17,8 @@ pub const CONTRACT_REGISTRY: Map<(String, String, u64), (bool, String, String)> 
 
 pub struct DispatchDataStruct {
     pub payload: Bytes,
-    pub dest_addr : Bytes,
+    pub dest_addr: Bytes,
     pub chain_id: u64,
     pub chain_gas_price: u64,
     pub chain_gas_limit: u64,
 }
-    

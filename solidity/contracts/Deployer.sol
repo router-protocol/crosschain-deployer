@@ -12,7 +12,7 @@ contract CrossChainDeployer {
     address public gateway;
 
     uint64 public chainID;
-    event deployEvent( bytes _code , bytes _decodedPayload , bytes32 _salt , address _contractAddress , bytes32 _digest );
+    event deployEvent( bytes _code , bytes _decodedPayload , bytes32 _salt , address _contractAddress , bytes32 _digest , bytes sender );
 
     modifier isGateway (){
         require ( msg.sender == address(gateway) ,"ERC20 : Sender must be gateway Contract ");
@@ -30,7 +30,7 @@ contract CrossChainDeployer {
 
     //Factory Fx
     function deployContract(
-        string memory sender,
+        bytes memory sender,
         bytes memory payload
     ) internal returns ( uint64 , bytes32 , bytes32 , address  ) {
         address addr;
@@ -38,7 +38,7 @@ contract CrossChainDeployer {
         assembly {
             addr := create2(0, add(decodedPayload, 0x20), mload(decodedPayload), salt)
         }
-        emit deployEvent( payload  , decodedPayload , salt , addr , digest );
+        emit deployEvent( payload  , decodedPayload , salt , addr , digest , sender );
         if (addr == address(0)){
             revert();
         }
@@ -51,17 +51,8 @@ contract CrossChainDeployer {
         string memory srcChainId
     ) external returns (bytes memory){
         require(msg.sender == address(gateway), "Only gateway can call this function");
-        address sender = toAddress(requestSender);
-        ( uint64 cId, bytes32 digest, bytes32 salt, address addr) = deployContract( sender , packet);
-        return abi.encode( cid , digest , salt , addr );
-    }
-
-    function toAddress(bytes memory _bytes) internal pure returns (address contractAddress) {
-        bytes20 srcTokenAddress;
-        assembly {
-            srcTokenAddress := mload(add(_bytes, 0x20))
-        }
-        contractAddress = address(srcTokenAddress);
+        ( uint64 cId, bytes32 digest, bytes32 salt, address addr) = deployContract( requestSender , packet);
+        return abi.encode( cId , digest , salt , addr );
     }
 
 }

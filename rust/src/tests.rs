@@ -1,6 +1,6 @@
 use crate::contract::{execute, sudo};
-use crate::query::fetch_data;
 use crate::msg::{ExecuteMsg, InstantiateMsg};
+use crate::query::fetch_data;
 use crate::{contract::instantiate, msg::SudoMsg};
 use cosmwasm_std::testing::{MockApi, MockQuerier, MockStorage};
 use cosmwasm_std::{
@@ -26,7 +26,7 @@ fn get_mock_dependencies() -> OwnedDeps<MockStorage, MockApi, MockQuerier, Route
 
 fn do_instantiate(mut deps: DepsMut<RouterQuery>) {
     let instantiate_msg = InstantiateMsg {
-        bridge_address: String::from(BRIDGE_ADDRESS),
+        owner: String::from("router17h6lkfjdhwpyw25mwc749nmlvkxcqa4l6mfha0"),
     };
     let info = mock_info(INIT_ADDRESS, &[]);
     let env = mock_env();
@@ -55,7 +55,7 @@ fn test_sudo_function() {
     let test_string: String = String::from("80001");
     let encoded_string: String = base64::encode(test_string.clone());
     let msg: SudoMsg = SudoMsg::HandleIReceive {
-        request_sender: Binary::from_base64("97MRmF0DyXm9Sfa9szch6J9ie6U=").unwrap(),
+        request_sender: "97MRmF0DyXm9Sfa9szch6J9ie6U".to_string(),
         src_chain_id: String::from("80001"),
         request_identifier: 2,
         payload: Binary::from_base64(&encoded_string).unwrap(),

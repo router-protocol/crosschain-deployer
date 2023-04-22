@@ -1,4 +1,4 @@
-use cosmwasm_std::{ Binary , Addr };
+use cosmwasm_std::{Addr, Binary};
 pub use router_wasm_bindings::SudoMsg;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -6,17 +6,28 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InstantiateMsg {
     // here user can define required init variables
-    pub bridge_address: String,
+    pub owner: Addr,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
     // here user can define other executable messages
-    UpdateBridgeContract { address: String, payload: Binary },
-    SetChainType { chain_id: String, chain_type: u64 },
-    ChangeOwner { address: Addr },
-    RegisterDeployer { address: String, chainid: u64 },
+    UpdateBridgeContract {
+        address: String,
+        payload: Binary,
+    },
+    SetChainType {
+        chain_id: String,
+        chain_type: u64,
+    },
+    ChangeOwner {
+        address: Addr,
+    },
+    RegisterDeployer {
+        address: String,
+        chainid: u64,
+    },
     DeployContract {
         code: String,
         salt: String,
@@ -24,9 +35,7 @@ pub enum ExecuteMsg {
         chainids: Vec<u64>,
         chain_types: Vec<String>,
         gas_limit: Vec<u64>,
-        forwarder_contract: String,
     },
-
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -39,7 +48,9 @@ pub enum QueryMsg {
     GetContractVersion {},
     FetchData {},
     FetchBridgeAddress {},
-    FetchChainType { chain_id: String },
+    FetchChainType {
+        chain_id: String,
+    },
 
     FetchOwner {},
     FetchDeployer {

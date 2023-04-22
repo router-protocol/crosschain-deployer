@@ -58,13 +58,14 @@ const config: HardhatUserConfig = {
         path: "m/44'/60'/0"
       }
     },
-    bscMainnet: {
-      url: process.env.BSCMAINNET_RPC || '',
+    avalancheFujiTestnet: {
+      url: "https://api.avax-test.network/ext/bc/C/rpc",
+      chainId: 43113,
       accounts: {
         initialIndex: 1,
         mnemonic,
         path: "m/44'/60'/0"
-      }
+      },
     },
     polygonMumbai: {
       url: process.env.POLYGONTESTNET_RPC || '',
@@ -88,7 +89,8 @@ const config: HardhatUserConfig = {
     apiKey: {
       bscTestnet : process.env.BSCSCAN_API,
       bsc : process.env.BSCSCAN_API,
-      polygonMumbai: process.env.POLYGONSCAN_API
+      polygonMumbai: process.env.POLYGONSCAN_API,
+      avalancheFujiTestnet: process.env.FUJI_ETHERSCAN_API,
     },
   },
 };

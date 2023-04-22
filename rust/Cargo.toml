@@ -1,5 +1,5 @@
 [package]
-name = "router-crosstalk-rust"
+name = "router-crosschain_deployer"
 version = "0.1.0"
 authors = ["thedewer <harsh.patel54@gmail.com>"]
 edition = "2021"
@@ -40,7 +40,7 @@ optimize = """docker run --rm -v "$(pwd)":/code \
 """
 
 [dependencies]
-router-wasm-bindings = { version = "0.2.0", default-features = false, features = ["ethabi"] }
+router-wasm-bindings = { version = "0.2.3", default-features = false, features = ["ethabi"] }
 cosmwasm-std = "1.0.0"
 cosmwasm-storage = "1.0.0"
 cw-storage-plus = "0.13.2"

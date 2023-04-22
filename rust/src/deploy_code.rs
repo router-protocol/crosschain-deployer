@@ -1,10 +1,8 @@
-use crate::state::{ CONTRACT_REGISTRY, DEPLOYER_REGISTER , DispatchDataStruct};
-use cosmwasm_std::{
-    DepsMut, Env, Event, MessageInfo, Response, StdError, StdResult, Uint128,
-};
+use crate::state::{DispatchDataStruct, DEPLOYER_REGISTER};
+use cosmwasm_std::{DepsMut, Env, Event, MessageInfo, Response, StdError, StdResult, Uint128};
 use router_wasm_bindings::ethabi::{encode, Token};
-use router_wasm_bindings::types::{  RequestMetaData ,AckType  };
-use router_wasm_bindings::{RouterMsg, RouterQuerier, RouterQuery, Bytes};
+use router_wasm_bindings::types::{AckType, RequestMetaData};
+use router_wasm_bindings::{Bytes, RouterMsg, RouterQuerier, RouterQuery};
 
 // use crate::query::fetch_oracle_gas_price;
 
@@ -20,7 +18,6 @@ pub fn deploy_code(
     chainid: Vec<u64>,
     chain_types: Vec<String>,
     gas_limit: Vec<u64>,
-    forwarder_contract: String,
 ) -> StdResult<Response<RouterMsg>> {
     // let mut req = [ 0 , 9];
     let mut chainid_contract_calls: Vec<DispatchDataStruct> = vec![];
@@ -109,15 +106,15 @@ pub fn deploy_code(
         };
 
         // Map Hash state to chainID
-        CONTRACT_REGISTRY.save(
-            deps.storage,
-            (
-                code_hash_str.clone().into(),
-                salt_str_dec.clone().into(),
-                cid,
-            ),
-            &(false, "pending ack".to_string(), forwarder_contract.clone()),
-        )?;
+        // CONTRACT_REGISTRY.save(
+        //     deps.storage,
+        //     (
+        //         code_hash_str.clone().into(),
+        //         salt_str_dec.clone().into(),
+        //         cid,
+        //     ),
+        //     &(false, "pending ack".to_string(), forwarder_contract.clone()),
+        // )?;
 
         // Generate and add Event
         let payload_str = format!(
@@ -139,7 +136,7 @@ pub fn deploy_code(
 
         let new_dispatch = DispatchDataStruct {
             payload: payload.clone().to_vec(),
-            dest_addr : deployer_addr_vec.clone().to_vec(),
+            dest_addr: deployer_addr_vec.clone().to_vec(),
             chain_id: cid,
             chain_gas_limit: gas_limit[i],
             chain_gas_price: gas_price.gas_price,
@@ -157,29 +154,32 @@ pub fn deploy_code(
         let limit = chainid_contract_calls[j].chain_gas_limit.clone();
         let price = chainid_contract_calls[j].chain_gas_price.clone();
 
-        let request_packet: Bytes = encode(&[Token::Bytes(contact_call_payload), Token::Bytes(contract_addr)]);
+        let request_packet: Bytes = encode(&[
+            Token::Bytes(contract_addr),
+            Token::Bytes(contact_call_payload),
+        ]);
         let dest_chain_id: String = String::from(cid.to_string());
 
         let request_metadata: RequestMetaData = RequestMetaData {
             dest_gas_limit: limit,
             dest_gas_price: price,
-            ack_gas_limit: 300_000,
-            ack_gas_price: 10_000_000,
+            ack_gas_limit: limit,
+            ack_gas_price: price,
             relayer_fee: Uint128::zero(),
             ack_type: AckType::AckOnBoth,
             is_read_call: false,
-            asm_address: vec![],
+            asm_address: "".to_string(),
         };
-    
+
         let request: RouterMsg = RouterMsg::CrosschainCall {
             version: 1,
             route_amount: Uint128::new(0u128),
-            route_recipient: vec![],
+            route_recipient: "".to_string(),
             dest_chain_id,
             request_metadata: request_metadata.get_abi_encoded_bytes(),
             request_packet,
         };
-            outbound_messages.push(request);
+        outbound_messages.push(request);
     }
 
     // IF Outbound Message is 0 throw error
