@@ -33,8 +33,8 @@ pub enum ExecuteMsg {
         salt: String,
         constructor_args: Vec<String>,
         chainids: Vec<u64>,
-        chain_types: Vec<String>,
         gas_limit: Vec<u64>,
+        gas_prices: Vec<u64>,
     },
 }
 

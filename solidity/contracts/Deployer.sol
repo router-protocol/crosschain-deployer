@@ -12,7 +12,7 @@ contract CrossChainDeployer {
     address public gateway;
 
     uint64 public chainID;
-    event deployEvent( bytes _code , bytes _decodedPayload , bytes32 _salt , address _contractAddress , bytes32 _digest , bytes sender );
+    event deployEvent( bytes _code , bytes _decodedPayload , bytes32 _salt , address _contractAddress , bytes32 _digest , string sender );
 
     modifier isGateway (){
         require ( msg.sender == address(gateway) ,"ERC20 : Sender must be gateway Contract ");
@@ -30,7 +30,7 @@ contract CrossChainDeployer {
 
     //Factory Fx
     function deployContract(
-        bytes memory sender,
+        string memory sender,
         bytes memory payload
     ) internal returns ( uint64 , bytes32 , bytes32 , address  ) {
         address addr;
@@ -46,7 +46,7 @@ contract CrossChainDeployer {
     }
 
     function iReceive(
-        bytes memory requestSender,
+        string memory requestSender,
         bytes memory packet,
         string memory srcChainId
     ) external returns (bytes memory){

@@ -71,6 +71,30 @@ Using following command from router station a evm contracts can be created on de
         }
     }
 
+    {
+        "deploy_contract": {
+            "code": "<CONTRACT BYTE CODE>",
+            "salt": "0x9d51687d04a49f2f9df398db0dedd78c9e543c8919f0c0024d04cd0ee8a87062",
+            "constructor_args": [
+                "< Contract Contractor arguments>",
+            ],
+            "chainids": [
+                80001
+            ],
+            "chain_types" :[
+                "CHAIN_TYPE_EVM"
+            ],
+            "gas_limit": [
+                30000000
+            ],
+            "gas_prices":[
+                300000000000
+            ],
+            "forwarder_contract" : "router1d4sad30uj59lxg56ylwn7457v8z4k5m3323r9u360q85w8ga3kfsfxrgc6"
+        }
+    }
+
+
 Where bytecode can change as per user need. Gas_price and gas_limit are specified in array corresponding to the respective chainid. 
 
 ### Generation of bytecode for contract which has constructor parameters

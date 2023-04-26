@@ -92,8 +92,8 @@ pub fn execute(
             salt,
             constructor_args,
             chainids,
-            chain_types,
             gas_limit,
+            gas_prices
         } => deploy_code(
             deps,
             env,
@@ -102,8 +102,8 @@ pub fn execute(
             salt,
             constructor_args,
             chainids,
-            chain_types,
             gas_limit,
+            gas_prices
         ),
     }
 }

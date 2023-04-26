@@ -2,7 +2,7 @@ use crate::state::{DispatchDataStruct, DEPLOYER_REGISTER};
 use cosmwasm_std::{DepsMut, Env, Event, MessageInfo, Response, StdError, StdResult, Uint128};
 use router_wasm_bindings::ethabi::{encode, Token};
 use router_wasm_bindings::types::{AckType, RequestMetaData};
-use router_wasm_bindings::{Bytes, RouterMsg, RouterQuerier, RouterQuery};
+use router_wasm_bindings::{Bytes, RouterMsg, RouterQuery};
 
 // use crate::query::fetch_oracle_gas_price;
 
@@ -16,8 +16,8 @@ pub fn deploy_code(
     salt: String,
     constructor_args: Vec<String>,
     chainid: Vec<u64>,
-    chain_types: Vec<String>,
     gas_limit: Vec<u64>,
+    gas_prices: Vec<u64>,
 ) -> StdResult<Response<RouterMsg>> {
     // let mut req = [ 0 , 9];
     let mut chainid_contract_calls: Vec<DispatchDataStruct> = vec![];
@@ -57,7 +57,6 @@ pub fn deploy_code(
         .add_attribute("hash - ", code_hash_str.clone())
         .add_attribute("salt - ", salt_str_dec.clone())
         .add_attribute("caller - ", info.sender);
-    let mut gas_total: u64 = 0;
     for i in 0..chainid.len() {
         let cid = chainid[i];
 
@@ -94,16 +93,17 @@ pub fn deploy_code(
         let deployer_str: String = DEPLOYER_REGISTER
             .load(deps.storage, &cid.to_string())
             .unwrap_or_default();
-        let deployer_addr_str: String = deployer_str.replace("0x", "");
-        let deployer_addr_vec: Vec<u8> = match hex::decode(deployer_addr_str) {
-            Ok(addr) => addr,
-            Err(err) => {
-                deps.api.debug(&err.to_string());
-                return Err(StdError::GenericErr {
-                    msg: err.to_string(),
-                });
-            }
-        };
+        // let deployer_addr_str: String = deployer_str.replace("0x", "");
+
+        // let deployer_addr_vec: Vec<u8> = match hex::decode(deployer_addr_str) {
+        //     Ok(addr) => addr,
+        //     Err(err) => {
+        //         deps.api.debug(&err.to_string());
+        //         return Err(StdError::GenericErr {
+        //             msg: err.to_string(),
+        //         });
+        //     }
+        // };
 
         // Map Hash state to chainID
         // CONTRACT_REGISTRY.save(
@@ -116,12 +116,14 @@ pub fn deploy_code(
         //     &(false, "pending ack".to_string(), forwarder_contract.clone()),
         // )?;
 
+        // Generate Factory Address
+
         // Generate and add Event
         let payload_str = format!(
-            "destContract:- {:?},  payloadRaw:- {:?} , Payload_str:- {:?}",
-            deployer_str,
+            "destContract:- {:?},  payloadRaw:- {:?} , Payload_str:- {:?} ",
+            deployer_str.clone(),
             payload.clone(),
-            payload_str
+            payload_str, 
         );
 
         let cid_str = format!("chainID :- {:?}", cid);
@@ -129,21 +131,17 @@ pub fn deploy_code(
         deploy_event.push(evt);
 
         //Fetch Gas Prices
-        let router_querier: RouterQuerier = RouterQuerier::new(&deps.querier);
-        let gas_price = router_querier.gas_price(chain_types[i].clone())?;
+        // let router_querier: RouterQuerier = RouterQuerier::new(&deps.querier);
+        // let gas_price = router_querier.gas_price(chain_types[i].clone())?;
 
-        // Generate Factory Address
-
+        
         let new_dispatch = DispatchDataStruct {
             payload: payload.clone().to_vec(),
-            dest_addr: deployer_addr_vec.clone().to_vec(),
+            dest_addr: deployer_str.clone(),
             chain_id: cid,
             chain_gas_limit: gas_limit[i],
-            chain_gas_price: gas_price.gas_price,
+            chain_gas_price: gas_prices[i],
         };
-        let gas_used = gas_limit[i].clone() * gas_price.gas_price.clone();
-        gas_total = gas_total + gas_used;
-
         chainid_contract_calls.push(new_dispatch);
     }
 
@@ -155,7 +153,7 @@ pub fn deploy_code(
         let price = chainid_contract_calls[j].chain_gas_price.clone();
 
         let request_packet: Bytes = encode(&[
-            Token::Bytes(contract_addr),
+            Token::String(contract_addr),
             Token::Bytes(contact_call_payload),
         ]);
         let dest_chain_id: String = String::from(cid.to_string());

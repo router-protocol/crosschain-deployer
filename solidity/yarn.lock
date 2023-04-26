@@ -895,10 +895,10 @@
     path-browserify "^1.0.0"
     url "^0.11.0"
 
-"@routerprotocol/evm-gateway-contracts@^1.1.7":
-  version "1.1.7"
-  resolved "https://registry.yarnpkg.com/@routerprotocol/evm-gateway-contracts/-/evm-gateway-contracts-1.1.7.tgz#b11b9e439fa1213c694455b2f2acf0b8da2a715d"
-  integrity sha512-IPmD/UPXuNKT5l+2m+f70CA8axD8uRyNIuUxDyDdrh3b3UJq61Q9RzHxowvbQHY1s+Ywge99io3R1QjQk8PgXw==
+"@routerprotocol/evm-gateway-contracts@^1.1.11":
+  version "1.1.11"
+  resolved "https://registry.yarnpkg.com/@routerprotocol/evm-gateway-contracts/-/evm-gateway-contracts-1.1.11.tgz#ebd0f2504d79fc7055a4d21e215d09983c8a1d32"
+  integrity sha512-lUW6ry17imFujeUPcS4wqQoQT1UUpQjboPLXcRkm2YncQsqo8gw47+l7A5m0N0aRRWnRKLg+CgJlhGl7HRSmhA==
   dependencies:
     "@openzeppelin/contracts" "^4.4.1"
     "@openzeppelin/contracts-upgradeable" "^4.7.3"

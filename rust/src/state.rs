@@ -17,7 +17,7 @@ pub const CONTRACT_REGISTRY: Map<(String, String, u64), (bool, String, String)> 
 
 pub struct DispatchDataStruct {
     pub payload: Bytes,
-    pub dest_addr: Bytes,
+    pub dest_addr: String,
     pub chain_id: u64,
     pub chain_gas_price: u64,
     pub chain_gas_limit: u64,
