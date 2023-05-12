@@ -1,40 +1,44 @@
-use cosmwasm_std::{Addr, Binary};
+use cosmwasm_std::Uint128;
 pub use router_wasm_bindings::SudoMsg;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct ChainTypeInfo {
+    pub chain_id: String,
+    pub chain_type: u64,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InstantiateMsg {
-    // here user can define required init variables
-    pub owner: Addr,
+    pub owner: String,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
-    // here user can define other executable messages
-    UpdateBridgeContract {
-        address: String,
-        payload: Binary,
-    },
-    SetChainType {
-        chain_id: String,
-        chain_type: u64,
+    SetChainTypes {
+        chain_type_info: Vec<ChainTypeInfo>,
     },
     ChangeOwner {
-        address: Addr,
+        address: String,
     },
     RegisterDeployer {
         address: String,
-        chainid: u64,
+        chain_id: String,
     },
     DeployContract {
         code: String,
         salt: String,
         constructor_args: Vec<String>,
-        chainids: Vec<u64>,
-        gas_limit: Vec<u64>,
+        chain_ids: Vec<String>,
+        gas_limits: Vec<u64>,
         gas_prices: Vec<u64>,
+        forwarder_contract: String,
+    },
+    WithdrawFunds {
+        recipient: String,
+        amount: Uint128,
     },
 }
 
@@ -47,21 +51,34 @@ pub enum QueryMsg {
     // fetch contract version
     GetContractVersion {},
     FetchData {},
-    FetchBridgeAddress {},
     FetchChainType {
         chain_id: String,
     },
 
     FetchOwner {},
     FetchDeployer {
-        chainid: u64,
+        chain_id: String,
     },
     FetchDeployState {
-        hash: String,
+        code_hash: String,
         salt: String,
-        chainid: u64,
+        chain_id: String,
     },
     FetchOracleGasPrice {
         chain_id: String,
+    },
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct CustodyContractInfo {
+    pub address: String,
+    pub chain_id: String,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum ForwarderExecuteMsg {
+    SetCustodyContracts {
+        custody_contracts: Vec<CustodyContractInfo>,
     },
 }
