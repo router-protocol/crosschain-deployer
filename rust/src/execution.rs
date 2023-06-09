@@ -43,7 +43,6 @@ pub fn deployer_execute(
             chain_ids,
             gas_limits,
             gas_prices,
-            forwarder_contract,
         } => deploy_code(
             deps,
             env,
@@ -54,7 +53,6 @@ pub fn deployer_execute(
             chain_ids,
             gas_limits,
             gas_prices,
-            forwarder_contract,
         ),
         ExecuteMsg::WithdrawFunds { recipient, amount } => {
             withdraw_funds(deps, &env, &info, recipient, amount)
@@ -188,7 +186,6 @@ pub fn deploy_code(
     chain_ids: Vec<String>,
     gas_limits: Vec<u64>,
     gas_prices: Vec<u64>,
-    forwarder_contract: String,
 ) -> StdResult<Response<RouterMsg>> {
     assert_eq!(
         constructor_args.len(),
@@ -250,9 +247,7 @@ pub fn deploy_code(
         let payload_str = hex::encode(payload.clone());
 
         // GET Factory Address
-        let deployer_str: String = DEPLOYER_REGISTER
-            .load(deps.storage, &chain_ids[i])
-            .unwrap_or_default();
+        let deployer_str: String = DEPLOYER_REGISTER.load(deps.storage, &chain_ids[i])?;
 
         // Map Hash state to chainID
         CONTRACT_REGISTRY.save(
@@ -333,8 +328,7 @@ pub fn deploy_code(
             msg: "Outbound Message is null".to_string(),
         });
     }
-    deps.api.addr_validate(&forwarder_contract)?;
-    TEMP_FORWARDER.save(deps.storage, &forwarder_contract)?;
+    TEMP_FORWARDER.save(deps.storage, &info.sender.to_string())?;
     let res = Response::new()
         .add_submessages(outbound_messages)
         .add_event(code_event)

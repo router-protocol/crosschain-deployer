@@ -7,100 +7,121 @@
 
 ## Installation 
 
-Download git repo
+To compile the Cross Chain Deployer Rust contracts, navigate to the `rust` directory and run the build script:
 
-    https://github.com/router-protocol/crosschain-deployer
+```sh
+cd rust
+sh scripts/build.sh
+```
 
-Compile crosschain Deployer Rust contracts using ( Mac )
+This command will generate a WebAssembly (wasm) file in the `artifacts` directory.
 
-    cd rust && docker run --rm -v "$(pwd)":/code \
-    --mount type=volume,source="$(basename "$(pwd)")_cache",target=/code/target \
-    --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-    cosmwasm/rust-optimizer-arm64:0.12.6
+To compile the Crosschain Solidity Contracts, navigate to the `solidity` directory and run the following commands: 
 
-Above command will generate wasm file in artifacts. 
-        
-Compile Crosschain Solidity Contracts using 
+```sh
+cd solidity
+yarn 
+npx hardhat clean
+npx hardhat compile 
+```
 
-    cd solidity && yarn install 
-    npx hardhat clean && npx hardhat clean 
+## Deploy Contracts on the Router Chain 
+ 
+To upload and instantiate the router contract using the [router station tool](https://station.routerprotocol.com), you can use the provided scripts for an easy deployment process. Execute the following command to upload and instantiate the contract on the router station:
 
+```sh
+cd deployments
+sh scripts/init.sh
+```
 
-## Deployer Contracts on Router Chain 
+When instantiating the Cross-Chain-Deployer cosmwasm contract, provide one constructor argument called `owner` in the instantiate message:
 
-### Upload and instantiate contracts 
+```json    
+{ 
+  "owner" : "<ownerAddress>" 
+}
+```
 
-Upload and instantiate contract on router station using following instantiate message 
+This `owner` address is used to perform administrative operations such as setting the contract address of deployer contracts present on each supporting chain.
 
-    { "owner" : "<ownerAddress>" }
-
-Where ownerAddress is owner address on router chain and will be owner of the initated crosschain deployer contract on routerchain
 
 ### Deploy CrossChain Deployer on EVM chains 
 
-after setting .env parameters on solidity folder deploy Deployer Contracts on EVM chains using following commands 
+After setting the `.env` parameters in the `solidity` folder, deploy the Deployer Contracts on EVM chains using the following commands: 
 
+```sh
     npx hardhat DEPLOY_CROSSCHAIN_DEPLOYER --network <NETWORK NAME>
+```
 
-The Deployed address will be stored on deployments/deployment.json file. Additional networks can be added on to hardhat config.
+For example:
+```sh
+    npx hardhat DEPLOY_CROSSCHAIN_DEPLOYER --network polygonMumbai
+    # after successful execution you will se output like this
+    # Contract CrossChainDeployer has been deployed to: 0x65264210b86Fe3Fd8017D74B7125f57036d20514
+```
+The deployed address will be stored in the `deployments/deployment.json` file. Additional networks can be added to the Hardhat configuration.
 
 ### Register Deployer on router Chain 
 
 Using router station use following commands to register deployer on router chain contracts 
-
-    {
-        "register_deployer":{
-            "address":"0x65264210b86Fe3Fd8017D74B7125f57036d20514",
-            "chainid":80001
-        }
+```json
+{
+    "register_deployer":{
+        "address": "0x65264210b86Fe3Fd8017D74B7125f57036d20514",
+        "chain_id": "80001"
     }
+}
+```
 
-Where address and chainid can be changed to exact specification.
-Note - This function can be triggeed only by owner. 
+You can change the `address` and `chain_id` to the appropriate values for your deployment. Note that this function can only be triggered by the owner.
 
 ### Deploying crosschain Contracts 
 
-Using following command from router station a evm contracts can be created on desired chains 
+From the router station, you can use the following command to create EVM contracts on the desired chains: 
 
-    {
-        "deploy_contract": {
-            "code": "0x6080604052348015600f57600080fd5b50601680601d6000396000f3fe6080604052600080fdfea164736f6c6343000804000a",
-            "chainids": [ 80001, 97 ],
-            "gas_price": [ 15000000000 ,15000000000 ],
-            "gas_limit": [ 1000000 , 1000000 ] 
-        }
-    }
+```json
+{
+  "deploy_contract": {
+    "code": "<CONTRACT BYTE CODE>",
+    "salt": "0x9d51687d04a49f2f9df398db0dedd78c9e543c8919f0c0024d04cd0ee8a87062",
+    "constructor_args": [
+      "<Contract Contractor arguments>"
+    ],
+    "chain_ids": [
+      "80001"
+    ],
+    "gas_limits": [
+      30000000
+    ],
+    "gas_prices": [
+      300000000000
+    ]
+  }
+}
+```
 
-    {
-        "deploy_contract": {
-            "code": "<CONTRACT BYTE CODE>",
-            "salt": "0x9d51687d04a49f2f9df398db0dedd78c9e543c8919f0c0024d04cd0ee8a87062",
-            "constructor_args": [
-                "< Contract Contractor arguments>",
-            ],
-            "chainids": [
-                80001
-            ],
-            "chain_types" :[
-                "CHAIN_TYPE_EVM"
-            ],
-            "gas_limit": [
-                30000000
-            ],
-            "gas_prices":[
-                300000000000
-            ],
-            "forwarder_contract" : "router1d4sad30uj59lxg56ylwn7457v8z4k5m3323r9u360q85w8ga3kfsfxrgc6"
-        }
-    }
+You can change the `code`, `salt` and other parameters with the appropriate values for your contract. The `constructor_args`, `gas_prices` and `gas_limits` are specified in arrays corresponding to the respective `chain_ids`.
 
+Once the EVM contract is deployed on the provided chains, an acknowledgement will be received. From the acknowledgement handler, a cross-contract function is called to the address that initially invoked the deployment instruction on the router chain. 
 
-Where bytecode can change as per user need. Gas_price and gas_limit are specified in array corresponding to the respective chainid. 
+```json
+{
+  "set_custody_contracts": {
+    "custody_contracts": [
+      {
+        "address": "<deplpyed evm contract address>",
+        "chain_id": "<deployed contract chain_id>"
+      }
+    ]
+  }
+}
+```
+
+The caller can handle this function according to their requirement. Note that having this handler function is optional for the user/contract.
 
 ### Generation of bytecode for contract which has constructor parameters
 
-THere can be instances where contract would need to be broadcasted which has constructor parameters attached to it. 
-This is edge case which can be factored into using following method of ethers js .
+In cases where a contract needs to be deployed with constructor parameters attached to it, you can use the following method with ethers.js:
 
 ```
 let ConstuctorParams = ethers.utils.defaultAbiCoder.encode([< Data Types of consturctor elements>],[< Array of Constuctor Elements ]).slice(2)
@@ -110,20 +131,18 @@ console.log(DeployedBytecode);
 
 ```
 
-Use deployed bytecode generated by this method in deploying contracts with constructor paramters.
+Use the deployed bytecode generated by this method to deploy contracts with constructor parameters.
 
 ### Fetching Deployer Address 
 
-Use following commands to fetch deployer address from router chain Contract 
+To fetch the deployer address from the router chain contract, use the following command:
 
 ```json
 {
   "fetch_deployer": {
-    "chainid": 97
+    "chain_id": 97
   }
 }
 ```
 
-### Fetch deployed Contact on EVM Chain 
-
-In Deployer Contract on respective EVM chain We can find deployEvent which has deployed Bytecode parameter which would correspond to our bytecode and newly generated contract address will also be given over there. 
+To streamline the deployment process of our abstract account handler on EVM chains, we leverage the cross-chain deployer. This powerful tool simplifies the deployment of the abstract account handler, which is essential for efficiently managing accounts across different chains and enabling seamless cross-chain functionality. For comprehensive instructions and practical code examples, we invite you to explore the [Omniwallet](https://github.com/router-protocol/omniwallet) repository. There, you'll find detailed guidance on deploying the abstract account handler and harnessing its capabilities.

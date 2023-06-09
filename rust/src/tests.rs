@@ -136,7 +136,6 @@ fn test_sudo_ack_function() {
         chain_ids: vec![String::from("80001")],
         gas_limits: vec![3000000],
         gas_prices: vec![40_000_000_000],
-        forwarder_contract: String::from("router_forwarder_addr"),
     };
     let response = execute(deps.as_mut(), env.clone(), info.clone(), msg).unwrap();
     assert_eq!(response.messages.len(), 1);

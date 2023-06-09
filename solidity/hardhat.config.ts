@@ -71,7 +71,7 @@ const config: HardhatUserConfig = {
       accounts: [privateKey]
     },
     polygonMumbai: {
-      url: process.env.POLYGONTESTNET_RPC || '',
+      url: "https://rpc.ankr.com/polygon_mumbai",
       accounts: [privateKey]
     },
   },

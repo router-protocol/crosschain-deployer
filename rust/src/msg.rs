@@ -34,7 +34,6 @@ pub enum ExecuteMsg {
         chain_ids: Vec<String>,
         gas_limits: Vec<u64>,
         gas_prices: Vec<u64>,
-        forwarder_contract: String,
     },
     WithdrawFunds {
         recipient: String,

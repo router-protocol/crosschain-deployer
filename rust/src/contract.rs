@@ -16,7 +16,7 @@ use router_wasm_bindings::{RouterMsg, RouterQuery};
 
 // version info for migration info
 const CONTRACT_NAME: &str = "router-crosschain_deployer";
-const CONTRACT_VERSION: &str = "0.1.2";
+const CONTRACT_VERSION: &str = "0.1.3";
 pub const FORWARDER_REPLY_ID: u64 = 1;
 pub const CREATE_I_SEND_REQUEST: u64 = 2;
 
@@ -131,6 +131,12 @@ fn handle_sudo_ack(
     )
     .unwrap();
 
+    let execution_msg: String = format!(
+        "chain_id {:?}, digest {:?}, salt {:?}, addr {:?}",
+        chain_id, digest, salt, addr
+    );
+    deps.api.debug(&execution_msg);
+
     let registry_info: (bool, String, String) =
         CONTRACT_REGISTRY.load(deps.storage, (&digest, &salt, &chain_id))?;
     CONTRACT_REGISTRY.save(
@@ -140,6 +146,10 @@ fn handle_sudo_ack(
     )?;
     let forwader_addr: String =
         FORWARDER_CONTRACT_MAPPING.load(deps.storage, &request_identifier.to_string())?;
+    let info_str: String = format!(
+        "address -> {:?}, registry_info {:?}",
+        forwader_addr, registry_info
+    );
     let exec_msg: CosmosMsg<RouterMsg> = CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: forwader_addr,
         funds: vec![],
@@ -150,6 +160,7 @@ fn handle_sudo_ack(
             }],
         })?,
     });
+    deps.api.debug(&info_str);
     let sub_msg: SubMsg<RouterMsg> = SubMsg {
         gas_limit: None,
         id: FORWARDER_REPLY_ID,
