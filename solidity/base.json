@@ -1,0 +1,837 @@
+{
+  "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "Slither",
+          "informationUri": "https://github.com/crytic/slither",
+          "version": "0.9.2",
+          "rules": [
+            {
+              "id": "0-2-codex",
+              "name": "codex",
+              "properties": {
+                "precision": "medium",
+                "security-severity": "8.0"
+              },
+              "shortDescription": {
+                "text": "Codex"
+              },
+              "help": {
+                "text": "Review codex's message."
+              }
+            },
+            {
+              "id": "2-1-missing-zero-check",
+              "name": "missing-zero-check",
+              "properties": {
+                "precision": "high",
+                "security-severity": "3.0"
+              },
+              "shortDescription": {
+                "text": "Missing zero address validation"
+              },
+              "help": {
+                "text": "Check that the address is not zero."
+              }
+            },
+            {
+              "id": "3-0-assembly",
+              "name": "assembly",
+              "properties": {
+                "precision": "very-high",
+                "security-severity": "0.0"
+              },
+              "shortDescription": {
+                "text": "Assembly usage"
+              },
+              "help": {
+                "text": "Do not use `evm` assembly."
+              }
+            },
+            {
+              "id": "3-0-pragma",
+              "name": "pragma",
+              "properties": {
+                "precision": "very-high",
+                "security-severity": "0.0"
+              },
+              "shortDescription": {
+                "text": "Different pragma directives are used"
+              },
+              "help": {
+                "text": "Use one Solidity version."
+              }
+            },
+            {
+              "id": "3-0-solc-version",
+              "name": "solc-version",
+              "properties": {
+                "precision": "very-high",
+                "security-severity": "0.0"
+              },
+              "shortDescription": {
+                "text": "Incorrect versions of Solidity"
+              },
+              "help": {
+                "text": "\nDeploy with any of the following Solidity versions:\n- 0.5.16 - 0.5.17\n- 0.6.11 - 0.6.12\n- 0.7.5 - 0.7.6\n- 0.8.16\n\nThe recommendations take into account:\n- Risks related to recent releases\n- Risks of complex code generation changes\n- Risks of new language features\n- Risks of known bugs\n\nUse a simple pragma version that allows any of these versions.\nConsider using the latest version of Solidity for testing."
+              }
+            },
+            {
+              "id": "3-0-naming-convention",
+              "name": "naming-convention",
+              "properties": {
+                "precision": "very-high",
+                "security-severity": "0.0"
+              },
+              "shortDescription": {
+                "text": "Conformance to Solidity naming conventions"
+              },
+              "help": {
+                "text": "Follow the Solidity [naming convention](https://solidity.readthedocs.io/en/v0.4.25/style-guide.html#naming-conventions)."
+              }
+            },
+            {
+              "id": "4-0-immutable-states",
+              "name": "immutable-states",
+              "properties": {
+                "precision": "very-high",
+                "security-severity": "0.0"
+              },
+              "shortDescription": {
+                "text": "State variables that could be declared immutable"
+              },
+              "help": {
+                "text": "Add the `immutable` attribute to state variables that never change or are set only in the constructor."
+              }
+            }
+          ]
+        }
+      },
+      "results": [
+        {
+          "ruleId": "0-2-codex",
+          "message": {
+            "text": "Codex detected a potential bug in Context (node_modules/@openzeppelin/contracts/utils/Context.sol#16-24)\nThis contract does not have any access control, meaning that any address can call the functions _msgSender() and _msgData(). This could lead to malicious actors accessing sensitive data.\n",
+            "markdown": "Codex detected a potential bug in [Context](node_modules/@openzeppelin/contracts/utils/Context.sol#L16-L24)\nThis contract does not have any access control, meaning that any address can call the functions _msgSender() and _msgData(). This could lead to malicious actors accessing sensitive data.\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "node_modules/@openzeppelin/contracts/utils/Context.sol"
+                },
+                "region": {
+                  "startLine": 16,
+                  "endLine": 24
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "2d5b5452535204509cc3b46df68e9d85adede1cc32afeed40c0c48d7e7f2e908"
+          }
+        },
+        {
+          "ruleId": "0-2-codex",
+          "message": {
+            "text": "Codex detected a potential bug in EmptyContract (contracts/EmpytContact.sol#5-7)\nThis contract does not have any code, so it is not doing anything. It is not possible to find any vulnerabilities in this contract.\n",
+            "markdown": "Codex detected a potential bug in [EmptyContract](contracts/EmpytContact.sol#L5-L7)\nThis contract does not have any code, so it is not doing anything. It is not possible to find any vulnerabilities in this contract.\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "contracts/EmpytContact.sol"
+                },
+                "region": {
+                  "startLine": 5,
+                  "endLine": 7
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "4bb4aeca858b098ce1fd7d490a18501da38c192253e527f0cdd5c1d68ad031df"
+          }
+        },
+        {
+          "ruleId": "0-2-codex",
+          "message": {
+            "text": "Codex detected a potential bug in SimpleContract (contracts/SimpleContact.sol#5-11)\nThis contract does not have any access control, meaning anyone can call the encode() function. This could lead to a malicious actor sending malicious payloads to the contract, which could lead to a re-entrancy attack.\n",
+            "markdown": "Codex detected a potential bug in [SimpleContract](contracts/SimpleContact.sol#L5-L11)\nThis contract does not have any access control, meaning anyone can call the encode() function. This could lead to a malicious actor sending malicious payloads to the contract, which could lead to a re-entrancy attack.\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "contracts/SimpleContact.sol"
+                },
+                "region": {
+                  "startLine": 5,
+                  "endLine": 11
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "6363624d9353bff199f5409d4d5d5fba98d3247358fdb3a1e0455f71dc786441"
+          }
+        },
+        {
+          "ruleId": "0-2-codex",
+          "message": {
+            "text": "Codex detected a potential bug in Account (contracts/OwnableContact.sol#4-17)\nThere is no modifier on the setOwner() function, meaning anyone can call it and change the owner address.\n",
+            "markdown": "Codex detected a potential bug in [Account](contracts/OwnableContact.sol#L4-L17)\nThere is no modifier on the setOwner() function, meaning anyone can call it and change the owner address.\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "contracts/OwnableContact.sol"
+                },
+                "region": {
+                  "startLine": 4,
+                  "endLine": 17
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "7d7709a76e4525a7bf750c89342ff3bdb0195afd6d0947da381ee6a8978f25ee"
+          }
+        },
+        {
+          "ruleId": "0-2-codex",
+          "message": {
+            "text": "Codex detected a potential bug in IGateway (node_modules/evm-gateway-contract/contracts/IGateway.sol#9-42)\nThere is no input validation on the parameters passed to the functions. This could lead to malicious actors passing malicious data to the functions, which could lead to unexpected behavior or even a denial of service attack.\n",
+            "markdown": "Codex detected a potential bug in [IGateway](node_modules/evm-gateway-contract/contracts/IGateway.sol#L9-L42)\nThere is no input validation on the parameters passed to the functions. This could lead to malicious actors passing malicious data to the functions, which could lead to unexpected behavior or even a denial of service attack.\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "node_modules/evm-gateway-contract/contracts/IGateway.sol"
+                },
+                "region": {
+                  "startLine": 9,
+                  "endLine": 42
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "a6df2391d1a4a851578887c2faa79cae691e9bc068092b18d6a33dee082fd90b"
+          }
+        },
+        {
+          "ruleId": "0-2-codex",
+          "message": {
+            "text": "Codex detected a potential bug in Ownable (node_modules/@openzeppelin/contracts/access/Ownable.sol#20-83)\nThere is no access restriction on the _transferOwnership() function, meaning anyone can call it and transfer ownership of the contract.\n",
+            "markdown": "Codex detected a potential bug in [Ownable](node_modules/@openzeppelin/contracts/access/Ownable.sol#L20-L83)\nThere is no access restriction on the _transferOwnership() function, meaning anyone can call it and transfer ownership of the contract.\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "node_modules/@openzeppelin/contracts/access/Ownable.sol"
+                },
+                "region": {
+                  "startLine": 20,
+                  "endLine": 83
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "a780f8b0198bc49cac45b412f241dc7d76e55104f7558fb9fb73eed6fd26f1de"
+          }
+        },
+        {
+          "ruleId": "0-2-codex",
+          "message": {
+            "text": "Codex detected a potential bug in Utils (node_modules/evm-gateway-contract/contracts/Utils.sol#4-118)\nNo vulnerabilities found.\n",
+            "markdown": "Codex detected a potential bug in [Utils](node_modules/evm-gateway-contract/contracts/Utils.sol#L4-L118)\nNo vulnerabilities found.\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "node_modules/evm-gateway-contract/contracts/Utils.sol"
+                },
+                "region": {
+                  "startLine": 4,
+                  "endLine": 118
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "b2f414c46abce2efacd5cf7b152c23e06acc72cec33d90e44cfbcd93253ecc18"
+          }
+        },
+        {
+          "ruleId": "0-2-codex",
+          "message": {
+            "text": "Codex detected a potential bug in CrossChainDeployer (contracts/Deployer.sol#10-53)\nThe contract does not check the length of the payload passed to the deployContract() function. This could allow an attacker to pass a maliciously long payload, potentially causing a stack overflow.\n",
+            "markdown": "Codex detected a potential bug in [CrossChainDeployer](contracts/Deployer.sol#L10-L53)\nThe contract does not check the length of the payload passed to the deployContract() function. This could allow an attacker to pass a maliciously long payload, potentially causing a stack overflow.\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "contracts/Deployer.sol"
+                },
+                "region": {
+                  "startLine": 10,
+                  "endLine": 53
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "cbfc32ca8d6aa6c0df94c6c03b2d98a343b80e64a3c5c580aaf1e7c32c60a44c"
+          }
+        },
+        {
+          "ruleId": "2-1-missing-zero-check",
+          "message": {
+            "text": "Account.constructor(address)._owner (contracts/OwnableContact.sol#7) lacks a zero-check on :\n\t\t- owner = _owner (contracts/OwnableContact.sol#8)\n",
+            "markdown": "[Account.constructor(address)._owner](contracts/OwnableContact.sol#L7) lacks a zero-check on :\n\t\t- [owner = _owner](contracts/OwnableContact.sol#L8)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "contracts/OwnableContact.sol"
+                },
+                "region": {
+                  "startLine": 7,
+                  "endLine": 7
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "225b013edbf8add8b19e03dcc09d59cacbf63f5a4be6476665bfeaef276c9536"
+          }
+        },
+        {
+          "ruleId": "2-1-missing-zero-check",
+          "message": {
+            "text": "CrossChainDeployer.constructor(address)._gateway (contracts/Deployer.sol#22) lacks a zero-check on :\n\t\t- gateway = _gateway (contracts/Deployer.sol#23)\n",
+            "markdown": "[CrossChainDeployer.constructor(address)._gateway](contracts/Deployer.sol#L22) lacks a zero-check on :\n\t\t- [gateway = _gateway](contracts/Deployer.sol#L23)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "contracts/Deployer.sol"
+                },
+                "region": {
+                  "startLine": 22,
+                  "endLine": 22
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "8bae86d2dba706924092a162c6e02db9530c627c57bad50176a7ad346dff7632"
+          }
+        },
+        {
+          "ruleId": "2-1-missing-zero-check",
+          "message": {
+            "text": "Account.setOwner(address)._owner (contracts/OwnableContact.sol#11) lacks a zero-check on :\n\t\t- owner = _owner (contracts/OwnableContact.sol#13)\n",
+            "markdown": "[Account.setOwner(address)._owner](contracts/OwnableContact.sol#L11) lacks a zero-check on :\n\t\t- [owner = _owner](contracts/OwnableContact.sol#L13)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "contracts/OwnableContact.sol"
+                },
+                "region": {
+                  "startLine": 11,
+                  "endLine": 11
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "e5397a1bdcd9e628bea5a5725594988c724e801ac5b63201fe9de38683d2a21e"
+          }
+        },
+        {
+          "ruleId": "3-0-assembly",
+          "message": {
+            "text": "CrossChainDeployer.deployContract(string,bytes) (contracts/Deployer.sol#32-46) uses assembly\n\t- INLINE ASM (contracts/Deployer.sol#38-40)\n",
+            "markdown": "[CrossChainDeployer.deployContract(string,bytes)](contracts/Deployer.sol#L32-L46) uses assembly\n\t- [INLINE ASM](contracts/Deployer.sol#L38-L40)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "contracts/Deployer.sol"
+                },
+                "region": {
+                  "startLine": 32,
+                  "endLine": 46
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "02f1f67feabcaf723b8f0a157e20e8582a7cd88c4061ef0560625fe55fcaa6b0"
+          }
+        },
+        {
+          "ruleId": "3-0-assembly",
+          "message": {
+            "text": "console._sendLogPayload(bytes) (node_modules/hardhat/console.sol#7-14) uses assembly\n\t- INLINE ASM (node_modules/hardhat/console.sol#10-13)\n",
+            "markdown": "[console._sendLogPayload(bytes)](node_modules/hardhat/console.sol#L7-L14) uses assembly\n\t- [INLINE ASM](node_modules/hardhat/console.sol#L10-L13)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "node_modules/hardhat/console.sol"
+                },
+                "region": {
+                  "startLine": 7,
+                  "endLine": 14
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "4fce53bf556206137adc405854ca078387d01aa0dda0d58dd8aa9c3798d849bd"
+          }
+        },
+        {
+          "ruleId": "3-0-assembly",
+          "message": {
+            "text": "CrossChainDeployer.constructor(address) (contracts/Deployer.sol#22-29) uses assembly\n\t- INLINE ASM (contracts/Deployer.sol#25-27)\n",
+            "markdown": "[CrossChainDeployer.constructor(address)](contracts/Deployer.sol#L22-L29) uses assembly\n\t- [INLINE ASM](contracts/Deployer.sol#L25-L27)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "contracts/Deployer.sol"
+                },
+                "region": {
+                  "startLine": 22,
+                  "endLine": 29
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "fcbdddaa99520449d1fdf25e3e1ac64e8cb5b9eb1cc1278ba49912e77f9cc08a"
+          }
+        },
+        {
+          "ruleId": "3-0-pragma",
+          "message": {
+            "text": "Different versions of Solidity are used:\n\t- Version used: ['>=0.4.22<0.9.0', '>=0.8.0<0.9.0', '^0.8.0', '^0.8.4']\n\t- >=0.4.22<0.9.0 (node_modules/hardhat/console.sol#2)\n\t- >=0.8.0<0.9.0 (node_modules/evm-gateway-contract/contracts/IGateway.sol#2)\n\t- >=0.8.0<0.9.0 (node_modules/evm-gateway-contract/contracts/Utils.sol#2)\n\t- ^0.8.0 (node_modules/@openzeppelin/contracts/access/Ownable.sol#4)\n\t- ^0.8.0 (node_modules/@openzeppelin/contracts/utils/Context.sol#4)\n\t- ^0.8.4 (contracts/Deployer.sol#3)\n\t- ^0.8.4 (contracts/EmpytContact.sol#3)\n\t- ^0.8.4 (contracts/OwnableContact.sol#2)\n\t- ^0.8.4 (contracts/SimpleContact.sol#3)\n",
+            "markdown": "Different versions of Solidity are used:\n\t- Version used: ['>=0.4.22<0.9.0', '>=0.8.0<0.9.0', '^0.8.0', '^0.8.4']\n\t- [>=0.4.22<0.9.0](node_modules/hardhat/console.sol#L2)\n\t- [>=0.8.0<0.9.0](node_modules/evm-gateway-contract/contracts/IGateway.sol#L2)\n\t- [>=0.8.0<0.9.0](node_modules/evm-gateway-contract/contracts/Utils.sol#L2)\n\t- [^0.8.0](node_modules/@openzeppelin/contracts/access/Ownable.sol#L4)\n\t- [^0.8.0](node_modules/@openzeppelin/contracts/utils/Context.sol#L4)\n\t- [^0.8.4](contracts/Deployer.sol#L3)\n\t- [^0.8.4](contracts/EmpytContact.sol#L3)\n\t- [^0.8.4](contracts/OwnableContact.sol#L2)\n\t- [^0.8.4](contracts/SimpleContact.sol#L3)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "node_modules/hardhat/console.sol"
+                },
+                "region": {
+                  "startLine": 2,
+                  "endLine": 2
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "61863cf94bfb2040d9c4054ba0105d4685ebe77e61a91bc2bb374a8cdd31532f"
+          }
+        },
+        {
+          "ruleId": "3-0-solc-version",
+          "message": {
+            "text": "Pragma version^0.8.0 (node_modules/@openzeppelin/contracts/utils/Context.sol#4) allows old versions\n",
+            "markdown": "Pragma version[^0.8.0](node_modules/@openzeppelin/contracts/utils/Context.sol#L4) allows old versions\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "node_modules/@openzeppelin/contracts/utils/Context.sol"
+                },
+                "region": {
+                  "startLine": 4,
+                  "endLine": 4
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "21c670e40e414a2f849413afbbdb25adb81dae6585c4f38fc83730c17377e60f"
+          }
+        },
+        {
+          "ruleId": "3-0-solc-version",
+          "message": {
+            "text": "Pragma version^0.8.4 (contracts/OwnableContact.sol#2) allows old versions\n",
+            "markdown": "Pragma version[^0.8.4](contracts/OwnableContact.sol#L2) allows old versions\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "contracts/OwnableContact.sol"
+                },
+                "region": {
+                  "startLine": 2,
+                  "endLine": 2
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "6dac6056eee5122b2b48d1863ce2b523081b1f7fdb2539cda2f3ce80c3698b76"
+          }
+        },
+        {
+          "ruleId": "3-0-solc-version",
+          "message": {
+            "text": "Pragma version^0.8.4 (contracts/SimpleContact.sol#3) allows old versions\n",
+            "markdown": "Pragma version[^0.8.4](contracts/SimpleContact.sol#L3) allows old versions\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "contracts/SimpleContact.sol"
+                },
+                "region": {
+                  "startLine": 3,
+                  "endLine": 3
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "78c6f9b8f8b542bc2660c6e2476e0b69c636f2848c52043a9f44f00d7e292973"
+          }
+        },
+        {
+          "ruleId": "3-0-solc-version",
+          "message": {
+            "text": "Pragma version^0.8.4 (contracts/Deployer.sol#3) allows old versions\n",
+            "markdown": "Pragma version[^0.8.4](contracts/Deployer.sol#L3) allows old versions\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "contracts/Deployer.sol"
+                },
+                "region": {
+                  "startLine": 3,
+                  "endLine": 3
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "93c8bbc790df3ec20036be6827ab3b3b5f76b70824f018ee6d41f36480328011"
+          }
+        },
+        {
+          "ruleId": "3-0-solc-version",
+          "message": {
+            "text": "Pragma version>=0.8.0<0.9.0 (node_modules/evm-gateway-contract/contracts/Utils.sol#2) is too complex\n",
+            "markdown": "Pragma version[>=0.8.0<0.9.0](node_modules/evm-gateway-contract/contracts/Utils.sol#L2) is too complex\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "node_modules/evm-gateway-contract/contracts/Utils.sol"
+                },
+                "region": {
+                  "startLine": 2,
+                  "endLine": 2
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "be128d40aa461d3441d55a34fe5549ea9e6ead1fb24e5231d8d7f9c1e62e73fe"
+          }
+        },
+        {
+          "ruleId": "3-0-solc-version",
+          "message": {
+            "text": "Pragma version^0.8.0 (node_modules/@openzeppelin/contracts/access/Ownable.sol#4) allows old versions\n",
+            "markdown": "Pragma version[^0.8.0](node_modules/@openzeppelin/contracts/access/Ownable.sol#L4) allows old versions\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "node_modules/@openzeppelin/contracts/access/Ownable.sol"
+                },
+                "region": {
+                  "startLine": 4,
+                  "endLine": 4
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "d9fcf15f6c48db746fe8b4b5b79cadf5dc4cde499aed490b6b22d0f93b6cdddd"
+          }
+        },
+        {
+          "ruleId": "3-0-solc-version",
+          "message": {
+            "text": "Pragma version>=0.8.0<0.9.0 (node_modules/evm-gateway-contract/contracts/IGateway.sol#2) is too complex\n",
+            "markdown": "Pragma version[>=0.8.0<0.9.0](node_modules/evm-gateway-contract/contracts/IGateway.sol#L2) is too complex\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "node_modules/evm-gateway-contract/contracts/IGateway.sol"
+                },
+                "region": {
+                  "startLine": 2,
+                  "endLine": 2
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "ec589deff93d4f8ed0649be40c9a98cb0eac04ccd1734c97ad7e27e2cfc95e3d"
+          }
+        },
+        {
+          "ruleId": "3-0-solc-version",
+          "message": {
+            "text": "Pragma version>=0.4.22<0.9.0 (node_modules/hardhat/console.sol#2) is too complex\n",
+            "markdown": "Pragma version[>=0.4.22<0.9.0](node_modules/hardhat/console.sol#L2) is too complex\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "node_modules/hardhat/console.sol"
+                },
+                "region": {
+                  "startLine": 2,
+                  "endLine": 2
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "f30cc00866ad4644a058066a785a40fc85920295b639d57c66467131996ae1a5"
+          }
+        },
+        {
+          "ruleId": "3-0-solc-version",
+          "message": {
+            "text": "Pragma version^0.8.4 (contracts/EmpytContact.sol#3) allows old versions\n",
+            "markdown": "Pragma version[^0.8.4](contracts/EmpytContact.sol#L3) allows old versions\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "contracts/EmpytContact.sol"
+                },
+                "region": {
+                  "startLine": 3,
+                  "endLine": 3
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "f974ca08ce168d7f9ca13e0ffdc48cb3e729630769bcc8e663844f2a3f28b391"
+          }
+        },
+        {
+          "ruleId": "3-0-naming-convention",
+          "message": {
+            "text": "Event CrossChainDeployerdeployEvent(bytes,bytes,bytes32,address,bytes32) (contracts/Deployer.sol#15) is not in CapWords\n",
+            "markdown": "Event [CrossChainDeployerdeployEvent(bytes,bytes,bytes32,address,bytes32)](contracts/Deployer.sol#L15) is not in CapWords\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "contracts/Deployer.sol"
+                },
+                "region": {
+                  "startLine": 15,
+                  "endLine": 15
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "02ec033870afcb08eb920f6440eda158b7513128acaab8333c770720d1396dea"
+          }
+        },
+        {
+          "ruleId": "3-0-naming-convention",
+          "message": {
+            "text": "Constant Utils.constantPowerThreshold (node_modules/evm-gateway-contract/contracts/Utils.sol#117) is not in UPPER_CASE_WITH_UNDERSCORES\n",
+            "markdown": "Constant [Utils.constantPowerThreshold](node_modules/evm-gateway-contract/contracts/Utils.sol#L117) is not in UPPER_CASE_WITH_UNDERSCORES\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "node_modules/evm-gateway-contract/contracts/Utils.sol"
+                },
+                "region": {
+                  "startLine": 117,
+                  "endLine": 117
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "3c82cac61174515e21a45c78376cfc996a4a9f51b24d4b7fe3031148c8b53c25"
+          }
+        },
+        {
+          "ruleId": "3-0-naming-convention",
+          "message": {
+            "text": "Contract console (node_modules/hardhat/console.sol#4-1532) is not in CapWords\n",
+            "markdown": "Contract [console](node_modules/hardhat/console.sol#L4-L1532) is not in CapWords\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "node_modules/hardhat/console.sol"
+                },
+                "region": {
+                  "startLine": 4,
+                  "endLine": 1532
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "58c9dacc35a1219332b8b6ce561daac5384e938b9878894ede5d6cbaa444d455"
+          }
+        },
+        {
+          "ruleId": "3-0-naming-convention",
+          "message": {
+            "text": "Parameter Account.setOwner(address)._owner (contracts/OwnableContact.sol#11) is not in mixedCase\n",
+            "markdown": "Parameter [Account.setOwner(address)._owner](contracts/OwnableContact.sol#L11) is not in mixedCase\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "contracts/OwnableContact.sol"
+                },
+                "region": {
+                  "startLine": 11,
+                  "endLine": 11
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "98be9d450043638431d6633bacbc9c18968c25fc240779c5dfd309e0de5bf510"
+          }
+        },
+        {
+          "ruleId": "4-0-immutable-states",
+          "message": {
+            "text": "CrossChainDeployer.chainID (contracts/Deployer.sol#14) should be immutable \n",
+            "markdown": "[CrossChainDeployer.chainID](contracts/Deployer.sol#L14) should be immutable \n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "contracts/Deployer.sol"
+                },
+                "region": {
+                  "startLine": 14,
+                  "endLine": 14
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "29a035a48d4383386629a6e7a64346f49033371c926768414478e698271ba328"
+          }
+        },
+        {
+          "ruleId": "4-0-immutable-states",
+          "message": {
+            "text": "CrossChainDeployer.gateway (contracts/Deployer.sol#12) should be immutable \n",
+            "markdown": "[CrossChainDeployer.gateway](contracts/Deployer.sol#L12) should be immutable \n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "contracts/Deployer.sol"
+                },
+                "region": {
+                  "startLine": 12,
+                  "endLine": 12
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "862861d41bfede9f6826d4701f2affc96795f601641df2b51e8f1fbc2bfef98b"
+          }
+        }
+      ]
+    }
+  ]
+}

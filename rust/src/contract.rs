@@ -1,31 +1,28 @@
-use std::time::{SystemTime, UNIX_EPOCH};
-
-use crate::msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg, SudoMsg};
-use crate::state::{BRIDGE_CONTRACT, CONTRACT_REGISTRY, DATA, OWNER};
+use crate::execution::deployer_execute;
+use crate::msg::{
+    CustodyContractInfo, ExecuteMsg, ForwarderExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg,
+    SudoMsg,
+};
+use crate::query::deployer_query;
+use crate::state::{CONTRACT_REGISTRY, FORWARDER_CONTRACT_MAPPING, OWNER};
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::{entry_point, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
-use cosmwasm_std::{to_binary, Coin, Event, StdError, Uint128};
-use cw2::{get_contract_version, set_contract_version};
+use cosmwasm_std::{to_binary, Coin, CosmosMsg, ReplyOn, StdError, SubMsg, WasmMsg};
+use cw2::set_contract_version;
 use router_wasm_bindings::ethabi::{decode, ParamType};
-use router_wasm_bindings::types::{ChainType, ContractCall, OutboundBatchRequest, OutgoingTxFee};
-use router_wasm_bindings::RouterMsg;
-
-use crate::deploy_code::deploy_code;
-use crate::func_change_owner::change_owner;
-use crate::func_register_deployer::register_deployer;
-use crate::query::{
-    fetch_bridge_address, fetch_data, fetch_deploy_state, fetch_deployer, fetch_owner,
-};
+use router_wasm_bindings::types::ChainType;
+use router_wasm_bindings::utils::convert_address_from_bytes_to_string;
+use router_wasm_bindings::{RouterMsg, RouterQuery};
 
 // version info for migration info
-const CONTRACT_NAME: &str = "deploy-erc20";
-const CONTRACT_VERSION: &str = "0.1.0";
-const REQUEST_TIMEOUT: u64 = 600;
-pub const CREATE_OUTBOUND_REPLY_ID: u64 = 1;
+const CONTRACT_NAME: &str = "router-crosschain_deployer";
+const CONTRACT_VERSION: &str = "0.1.3";
+pub const FORWARDER_REPLY_ID: u64 = 1;
+pub const CREATE_I_SEND_REQUEST: u64 = 2;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
-    deps: DepsMut,
+    deps: DepsMut<RouterQuery>,
     _env: Env,
     _info: MessageInfo,
     msg: InstantiateMsg,
@@ -36,41 +33,31 @@ pub fn instantiate(
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn sudo(deps: DepsMut, _env: Env, msg: SudoMsg) -> StdResult<Response<RouterMsg>> {
+pub fn sudo(deps: DepsMut<RouterQuery>, env: Env, msg: SudoMsg) -> StdResult<Response<RouterMsg>> {
     match msg {
-        SudoMsg::HandleInboundReq {
-            sender,
-            chain_type,
-            source_chain_id,
-            event_nonce,
+        SudoMsg::HandleIReceive {
+            request_sender,
+            src_chain_id,
+            request_identifier,
             payload,
-        } => handle_in_bound_request(
+        } => handle_sudo_request(
             deps,
-            sender,
-            chain_type,
-            source_chain_id,
-            event_nonce,
+            env,
+            request_sender,
+            src_chain_id,
+            request_identifier,
             payload,
         ),
-        SudoMsg::HandleOutboundAck {
-            outbound_tx_requested_by,
-            destination_chain_type,
-            destination_chain_id,
-            outbound_batch_nonce,
-            execution_code,
-            execution_status,
-            exec_flags,
+        SudoMsg::HandleIAck {
+            request_identifier,
+            exec_flag,
             exec_data,
             refund_amount,
-        } => handle_out_bound_ack_request(
+        } => handle_sudo_ack(
             deps,
-            outbound_tx_requested_by,
-            destination_chain_type,
-            destination_chain_id,
-            outbound_batch_nonce,
-            execution_code,
-            execution_status,
-            exec_flags,
+            env,
+            request_identifier,
+            exec_flag,
             exec_data,
             refund_amount,
         ),
@@ -79,224 +66,130 @@ pub fn sudo(deps: DepsMut, _env: Env, msg: SudoMsg) -> StdResult<Response<Router
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
-    deps: DepsMut,
-    _env: Env,
-    _info: MessageInfo,
+    deps: DepsMut<RouterQuery>,
+    env: Env,
+    info: MessageInfo,
     msg: ExecuteMsg,
 ) -> StdResult<Response<RouterMsg>> {
-    match msg {
-        ExecuteMsg::ChangeOwner { address } => change_owner(deps, _info, address),
-        ExecuteMsg::DeployContract {
-            code,
-            salt,
-            constructor_args,
-            chainids,
-            gas_price,
-            gas_limit,
-        } => deploy_code(
-            deps,
-            _env,
-            _info,
-            code,
-            salt,
-            constructor_args,
-            chainids,
-            gas_price,
-            gas_limit,
-        ),
-        ExecuteMsg::RegisterDeployer { address, chainid } => {
-            register_deployer(deps, _info, address, chainid)
-        }
-        ExecuteMsg::UpdateBridgeContract { address, payload } => {
-            update_bridge_contract(deps, address, payload.0)
-        }
-    }
+    deployer_execute(deps, env, info, msg)
 }
 
-fn handle_in_bound_request(
-    deps: DepsMut,
-    sender: String,
-    chain_type: u32,
+pub fn handle_sudo_request(
+    _deps: DepsMut<RouterQuery>,
+    _env: Env,
+    request_sender: String,
     src_chain_id: String,
-    event_nonce: u64,
-    payload: Binary,
+    request_identifier: u64,
+    _payload: Binary,
 ) -> StdResult<Response<RouterMsg>> {
-    let payload_string: Vec<u8> = base64::decode(payload.to_string()).unwrap();
-    let string: String = String::from_utf8(payload_string).unwrap();
-    let reverse_string: String = string.chars().rev().collect::<String>();
-    DATA.save(deps.storage, &reverse_string)?;
-    let event = Event::new("in_bound_request")
-        .add_attribute("sender", sender.to_string())
-        .add_attribute("chain_type", chain_type.to_string())
-        .add_attribute("src_chain_id", src_chain_id.clone())
-        .add_attribute("payload", reverse_string.clone());
-    event_nonce.to_string();
-    let bridge_address: String = fetch_bridge_address(deps.as_ref())?;
-    let contract_call: ContractCall = ContractCall {
-        destination_contract_address: bridge_address.into_bytes(),
-        payload: reverse_string.into_bytes(),
-    };
-    let start = SystemTime::now();
-    let since_the_epoch = start
-        .duration_since(UNIX_EPOCH)
-        .expect("Time went backwards");
-    let current_timestamp = since_the_epoch.as_secs();
-    let exp_timestamp: u64 = current_timestamp + REQUEST_TIMEOUT;
-    let outbound_batch_req: OutboundBatchRequest = OutboundBatchRequest {
-        destination_chain_type: ChainType::ChainTypeEvm.get_chain_code(),
-        destination_chain_id: String::from("137"),
-        contract_calls: vec![contract_call],
-        relayer_fee: Coin {
-            denom: String::from("route"),
-            amount: Uint128::new(100_000u128),
-        },
-        outgoing_tx_fee: OutgoingTxFee {
-            gas_limit: 25000000,
-            gas_price: 25000000,
-        },
-        is_atomic: false,
-        exp_timestamp,
-    };
-    let outbound_batch_reqs: RouterMsg = RouterMsg::OutboundBatchRequests {
-        outbound_batch_requests: vec![outbound_batch_req],
-    };
-
     let res = Response::new()
-        .add_message(outbound_batch_reqs)
-        .add_event(event)
-        .add_attribute("sender", sender)
-        .add_attribute("chain_type", chain_type.to_string())
+        .add_attribute("sender", request_sender)
+        .add_attribute("request_identifier", request_identifier.to_string())
         .add_attribute("src_chain_id", src_chain_id);
     Ok(res)
 }
 
-fn handle_out_bound_ack_request(
-    deps: DepsMut,
-    sender: String,
-    destination_chain_type: u32,
-    destination_chain_id: String,
-    outbound_batch_nonce: u64,
-    execution_code: u64,
-    execution_status: bool,
-    exec_flags: Vec<bool>,
-    exec_data: Vec<Binary>,
-    _refund_amt: Coin,
+fn handle_sudo_ack(
+    deps: DepsMut<RouterQuery>,
+    _env: Env,
+    request_identifier: u64,
+    exec_flag: bool,
+    exec_data: Binary,
+    refund_amount: Coin,
 ) -> StdResult<Response<RouterMsg>> {
-    // TODO : Safety checks not applied for call failure and handling of failed requests
     let execution_msg: String = format!(
-        "execution_code {:?}, execution_status {:?}, exec_flags {:?}, exec_data {:?} {:?}",
-        execution_code,
-        execution_status,
-        exec_flags,
-        exec_data,
-        exec_data.len()
+        "request_identifier {:?}, refund_amount {:?}, exec_flag {:?}, exec_data {:?}",
+        request_identifier, refund_amount, exec_flag, exec_data
     );
     deps.api.debug(&execution_msg);
 
-    let msg: String = format!("execution_code {:?}", &exec_data[1]);
-    deps.api.debug(&msg);
-    let decoded_payload = match decode(
+    let token = decode(
         &[
             ParamType::Uint(64),
             ParamType::FixedBytes(32),
             ParamType::FixedBytes(32),
             ParamType::Address,
         ],
-        &exec_data[1],
-    ) {
-        Ok(token_vec) => token_vec,
-        Err(_) => {
-            return Err(StdError::GenericErr {
-                msg: String::from("err.into()"),
-            })
-        }
+        &exec_data.0,
+    )
+    .unwrap();
+    let chain_id_int: u64 = token[0].clone().into_uint().unwrap().as_u64();
+    let chain_id: String = chain_id_int.to_string();
+    let digest: String = convert_address_from_bytes_to_string(
+        &token[1].clone().into_fixed_bytes().unwrap(),
+        ChainType::ChainTypeEvm.get_chain_code(),
+    )
+    .unwrap();
+    let salt: String = convert_address_from_bytes_to_string(
+        &token[2].clone().into_fixed_bytes().unwrap(),
+        ChainType::ChainTypeEvm.get_chain_code(),
+    )
+    .unwrap();
+    let addr: String = convert_address_from_bytes_to_string(
+        &token[3].clone().into_address().unwrap().0,
+        ChainType::ChainTypeEvm.get_chain_code(),
+    )
+    .unwrap();
+
+    let execution_msg: String = format!(
+        "chain_id {:?}, digest {:?}, salt {:?}, addr {:?}",
+        chain_id, digest, salt, addr
+    );
+    deps.api.debug(&execution_msg);
+
+    let registry_info: (bool, String, String) =
+        CONTRACT_REGISTRY.load(deps.storage, (&digest, &salt, &chain_id))?;
+    CONTRACT_REGISTRY.save(
+        deps.storage,
+        (&digest, &salt, &chain_id),
+        &(true, addr.clone(), registry_info.2.clone()),
+    )?;
+    let forwader_addr: String =
+        FORWARDER_CONTRACT_MAPPING.load(deps.storage, &request_identifier.to_string())?;
+    let info_str: String = format!(
+        "address -> {:?}, registry_info {:?}",
+        forwader_addr, registry_info
+    );
+    let exec_msg: CosmosMsg<RouterMsg> = CosmosMsg::Wasm(WasmMsg::Execute {
+        contract_addr: forwader_addr,
+        funds: vec![],
+        msg: to_binary(&ForwarderExecuteMsg::SetCustodyContracts {
+            custody_contracts: vec![CustodyContractInfo {
+                chain_id,
+                address: addr,
+            }],
+        })?,
+    });
+    deps.api.debug(&info_str);
+    let sub_msg: SubMsg<RouterMsg> = SubMsg {
+        gas_limit: None,
+        id: FORWARDER_REPLY_ID,
+        reply_on: ReplyOn::Never,
+        msg: exec_msg,
     };
-    deps.api.debug("token vec created");
-    let cid = decoded_payload[0].clone().into_uint().unwrap().as_u64();
-    let hash_str = hex::encode(decoded_payload[1].clone().into_fixed_bytes().unwrap());
-    let salt_str = hex::encode(decoded_payload[2].clone().into_fixed_bytes().unwrap());
-    let addr_str = hex::encode(decoded_payload[3].clone().into_address().unwrap());
-    // Map Hash state to chainID
-    deps.api.debug("hash values created");
-    CONTRACT_REGISTRY.save(deps.storage, (hash_str, salt_str, cid), &(true, addr_str))?;
-    deps.api.debug("done");
     let res = Response::new()
-        .add_attribute("sender", sender)
-        .add_attribute("destination_chain_type", destination_chain_type.to_string())
-        .add_attribute("destination_chain_id", destination_chain_id)
-        .add_attribute("outbound_batch_nonce", outbound_batch_nonce.to_string());
-    Ok(res)
-}
-
-fn update_bridge_contract(
-    deps: DepsMut,
-    address: String,
-    payload: Vec<u8>,
-) -> StdResult<Response<RouterMsg>> {
-    BRIDGE_CONTRACT.save(deps.storage, &address)?;
-
-    let contract_call: ContractCall = ContractCall {
-        destination_contract_address: address.clone().into_bytes(),
-        payload,
-    };
-    let start = SystemTime::now();
-    let since_the_epoch = start
-        .duration_since(UNIX_EPOCH)
-        .expect("Time went backwards");
-    let current_timestamp = since_the_epoch.as_secs();
-    let exp_timestamp: u64 = current_timestamp + REQUEST_TIMEOUT;
-    let outbound_batch_req: OutboundBatchRequest = OutboundBatchRequest {
-        destination_chain_type: ChainType::ChainTypeEvm.get_chain_code(),
-        destination_chain_id: String::from("137"),
-        contract_calls: vec![contract_call],
-        relayer_fee: Coin {
-            denom: String::from("route"),
-            amount: Uint128::new(100_000u128),
-        },
-        outgoing_tx_fee: OutgoingTxFee {
-            gas_limit: 25000000,
-            gas_price: 25000000,
-        },
-        is_atomic: false,
-        exp_timestamp,
-    };
-    let outbound_batch_reqs: RouterMsg = RouterMsg::OutboundBatchRequests {
-        outbound_batch_requests: vec![outbound_batch_req],
-    };
-
-    let res = Response::new()
-        .add_message(outbound_batch_reqs)
-        .add_attribute("bridge_address", address);
+        .add_submessage(sub_msg)
+        .add_attribute("request_identifier", request_identifier.to_string());
     Ok(res)
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> StdResult<Response> {
+pub fn migrate(deps: DepsMut<RouterQuery>, _env: Env, _msg: MigrateMsg) -> StdResult<Response> {
     let ver = cw2::get_contract_version(deps.storage)?;
     // ensure we are migrating from an allowed contract
     if ver.contract != CONTRACT_NAME.to_string() {
         return Err(StdError::generic_err("Can only upgrade from same type").into());
     }
     // note: better to do proper semver compare, but string compare *usually* works
-    // if ver.version >= CONTRACT_VERSION.to_string() {
-    //     return Err(StdError::generic_err("Cannot upgrade from a newer version").into());
-    // }
+    if ver.version >= CONTRACT_VERSION.to_string() {
+        return Err(StdError::generic_err("Cannot upgrade from a newer version").into());
+    }
 
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
     Ok(Response::default())
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
-    match msg {
-        QueryMsg::GetContractVersion {} => to_binary(&get_contract_version(deps.storage)?),
-        QueryMsg::FetchData {} => to_binary(&fetch_data(deps)?),
-        QueryMsg::FetchOwner {} => to_binary(&fetch_owner(deps)?),
-        QueryMsg::FetchDeployer { chainid } => to_binary(&fetch_deployer(deps, chainid)?),
-        QueryMsg::FetchDeployState {
-            hash,
-            salt,
-            chainid,
-        } => to_binary(&fetch_deploy_state(deps, hash, salt, chainid)?),
-    }
+pub fn query(deps: Deps<RouterQuery>, env: Env, msg: QueryMsg) -> StdResult<Binary> {
+    deployer_query(deps, env, msg)
 }

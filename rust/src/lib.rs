@@ -1,13 +1,13 @@
 pub mod contract;
 mod error;
+pub mod execution;
+pub mod modifers;
 pub mod msg;
+pub mod query;
+pub mod reply;
 pub mod state;
 
 #[cfg(test)]
 pub mod tests;
 
 pub use crate::error::ContractError;
-mod deploy_code;
-mod func_change_owner;
-mod func_register_deployer;
-mod query;

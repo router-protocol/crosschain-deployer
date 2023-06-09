@@ -16,7 +16,18 @@ import "./tasks/verify/config-verify-crosschaindeployer"
 
 dotenv.config();
 
-const mnemonic = process.env.MEMNONIC
+const privateKey = process.env.PRIVATE_KEY;
+if (!privateKey) {
+  throw new Error("Please set your PRIVATE_KEY in a .env file");
+}
+
+const bscTestnet = process.env.BSCSCAN_API;
+const bsc = process.env.BSCSCAN_API;
+const polygonMumbai = process.env.POLYGONSCAN_API;
+
+if (!bscTestnet || !bsc || !polygonMumbai) {
+  throw new Error("Please set your etherscan Keys in a .env file");
+}
 
 // This is a sample Hardhat task. To learn how to create your own go to
 // https://hardhat.org/guides/create-task.html
@@ -52,27 +63,16 @@ const config: HardhatUserConfig = {
   networks: {
     bscTestnet: {
       url: process.env.BSCTESTNET_RPC || '',
-      accounts: {
-        initialIndex: 1,
-        mnemonic,
-        path: "m/44'/60'/0"
-      }
+      accounts: [privateKey]
     },
-    bscMainnet: {
-      url: process.env.BSCMAINNET_RPC || '',
-      accounts: {
-        initialIndex: 1,
-        mnemonic,
-        path: "m/44'/60'/0"
-      }
+    avalancheFujiTestnet: {
+      url: "https://api.avax-test.network/ext/bc/C/rpc",
+      chainId: 43113,
+      accounts: [privateKey]
     },
     polygonMumbai: {
-      url: process.env.POLYGONTESTNET_RPC || '',
-      accounts: {
-        initialIndex: 1,
-        mnemonic,
-        path: "m/44'/60'/0"
-      }
+      url: "https://rpc.ankr.com/polygon_mumbai",
+      accounts: [privateKey]
     },
   },
   docgen: {
@@ -86,9 +86,9 @@ const config: HardhatUserConfig = {
   },
   etherscan: {
     apiKey: {
-      bscTestnet : process.env.BSCSCAN_API,
-      bsc : process.env.BSCSCAN_API,
-      polygonMumbai: process.env.POLYGONSCAN_API
+      bscTestnet : bscTestnet,
+      bsc : bsc,
+      polygonMumbai: polygonMumbai
     },
   },
 };

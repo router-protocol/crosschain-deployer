@@ -19,6 +19,7 @@ task(DEPLOY_CROSSCHAIN_DEPLOYER, 'Deploy CrossChain Deployer Contract ')
 
     return C1i
   })
-
-// npx hardhat DEPLOY_CROSSCHAIN_DEPLOYER --network bscTestnet  && npx hardhat DEPLOY_CROSSCHAIN_DEPLOYER --network polygonMumbai
-// npx hardhat VERIFY_CROSSCHAIN_DEPLOYER --network bscTestnet  && npx hardhat VERIFY_CROSSCHAIN_DEPLOYER --network polygonMumbai
+/*
+    npx hardhat DEPLOY_CROSSCHAIN_DEPLOYER --network avalancheFujiTestnet  && npx hardhat DEPLOY_CROSSCHAIN_DEPLOYER --network polygonMumbai
+    npx hardhat VERIFY_CROSSCHAIN_DEPLOYER --network avalancheFujiTestnet  && npx hardhat VERIFY_CROSSCHAIN_DEPLOYER --network polygonMumbai
+ */
